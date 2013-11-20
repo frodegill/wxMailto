@@ -1,13 +1,15 @@
+# KDevelop
+.kdev4/
+*.kdev4
+
+# Auto-generated dependency files
+*.dep
+
+# Precompiled headers
+pch.h.gch
+
 # Compiled Object files
-*.slo
-*.lo
 *.o
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
+# Executable
+wxMailto
