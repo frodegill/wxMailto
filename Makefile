@@ -21,7 +21,7 @@ CXX = $(shell $(WX_CONFIG) --cxx)
 CFLAGS = -DHAVE_INTTYPES_H $(shell pkg-config gnutls --cflags) $(shell gpgme-config --thread=pthread --cflags) $(shell pkg-config libidn --cflags) $(shell pkg-config libgsasl --cflags)
 CXXFLAGS = $(shell $(WX_CONFIG) --cxxflags)
 CPPFLAGS += -W -Wall -Werror -pipe
-LIBSFLAGS = $(shell $(WX_CONFIG) --libs std) $(shell pkg-config gnutls --libs) -lgnutlsxx $(shell gpgme-config --thread=pthread --libs) $(shell pkg-config libidn --libs) -lmimetic $(shell pkg-config libgsasl --libs)
+LIBSFLAGS = $(shell $(WX_CONFIG) --libs std) $(shell pkg-config gnutls --libs) -lgnutlsxx $(shell gpgme-config --thread=pthread --libs) $(shell pkg-config libidn --libs) -lmimetic $(shell pkg-config libgsasl --libs) -lutil
 ifdef PCH
  CPPFLAGS += -DWX_PRECOMP
 endif

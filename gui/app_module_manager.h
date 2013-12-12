@@ -15,10 +15,13 @@
 #include "../glue/authenticateglue.h"
 #endif
 #include "../security/gpg_manager.h"
+#include "../security/password_manager.h"
 #if 0
 #include "../glue/idnaglue.h"
 #include "../glue/mimeglue.h"
+#endif
 #include "../glue/pocoglue.h"
+#if 0
 #include "../glue/tlsglue.h"
 #include "../security/session.h"
 #include "../storage/account.h"
@@ -64,10 +67,13 @@ public:
 	AuthenticateGlue* GetAuthenticateGlue();
 #endif
 	GPGManager* GetGPGManager();
+	PasswordManager* GetPasswordManager();
 #if 0
 	IdnaGlue* GetIdnaGLue();
 	MimeGlue* GetMimeGlue();
+#endif
 	PocoGlue* GetPocoGlue();
+#if 0
 	TLSGlue* GetTLSGlue();
 	SessionManager* GetSessionManager();
 	AccountManager* GetAccountManager();
@@ -85,10 +91,13 @@ private:
 friend class AuthenticateGlue;
 #endif
 friend class GPGManager;
+friend class PasswordManager;
 #if 0
 friend class IdnaGlue;
 friend class MimeGlue;
+#endif
 friend class PocoGlue;
+#if 0
 friend class TLSGlue;
 friend class MessageStore;
 friend class SessionManager;

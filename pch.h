@@ -7,6 +7,7 @@
 #include "gpgme.h"
 
 #include <wx/wx.h>
+#include <wx/cmdline.h>
 #include <wx/config.h>
 #include <wx/dir.h>
 #include <wx/hyperlink.h>

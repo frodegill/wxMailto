@@ -47,8 +47,8 @@ enum wxmailto_status
 	ID_CONTACT_NO_VALID_ADDRESS_FOR_PERIOD,
 #endif
 	//ODBC
-#if 0
 	ID_INVALID_DATASOURCE,
+#if 0
 	ID_DATASOURCE_ERROR,
 	ID_NO_DATA,
 #endif

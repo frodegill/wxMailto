@@ -138,6 +138,21 @@ wxmailto_status GPGManager::GetSecretKeys(GPGKeyList& key_list, wxBool& truncate
 	return ConvertStatus(err);
 }
 
+wxmailto_status GPGManager::Decrypt(const wxString& WXUNUSED(encrypted), const wxString& WXUNUSED(key), wxString& WXUNUSED(plaintext))
+{
+	return ID_NOT_IMPLEMENTED;
+}
+
+wxmailto_status GPGManager::Encrypt(const wxString& WXUNUSED(plaintext), const wxString& WXUNUSED(key), wxString& WXUNUSED(encrypted))
+{
+	return ID_NOT_IMPLEMENTED;
+}
+
+wxmailto_status GPGManager::Hash(const wxString& WXUNUSED(plaintext), wxString& WXUNUSED(hash))
+{
+	return ID_NOT_IMPLEMENTED;
+}
+
 wxmailto_status GPGManager::ConvertStatus(gpgme_error_t err)
 {
 	switch(err)

@@ -40,4 +40,6 @@ static inline wxInt MAX(wxInt a, wxInt b) {return a<b ? a : b;}
 static inline wxDouble DMAX(wxDouble a, wxDouble b) {return a>b ? a : b;}
 static inline wxDouble DMIN(wxDouble a, wxDouble b) {return a<b ? a : b;}
 
+#define RANDOM(x) rand()/(RAND_MAX+1.0)*(x)
+
 #endif // _WXMAILTO_DEFINES_H_

@@ -31,6 +31,11 @@ public:
 	wxmailto_status GetDefaultKey(GPGKey& key);
 	wxmailto_status GetSecretKeys(GPGKeyList& key_list, wxBool& truncated);
 
+public:
+	wxmailto_status Decrypt(const wxString& encrypted, const wxString& key, wxString& plaintext);
+	wxmailto_status Encrypt(const wxString& plaintext, const wxString& key, wxString& encrypted);
+	wxmailto_status Hash(const wxString& plaintext, wxString& hash);
+	
 private:
 	wxmailto_status ConvertStatus(gpgme_error_t err);
 	

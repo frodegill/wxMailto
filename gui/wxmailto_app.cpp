@@ -106,6 +106,8 @@ int wxMailto_App::OnExit()
 
 wxmailto_status wxMailto_App::InitializeWxModules()
 {
+	srand(time(NULL));
+
 	::wxInitAllImageHandlers();
 	if (!wxSocketBase::Initialize())
 	{
