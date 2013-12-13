@@ -1,0 +1,10 @@
+[wxMailto]
+Description = wxMailto database
+Trace       = Off
+TraceFile   = stderr
+Driver      = MySQL
+SERVER      = localhost
+PORT        = 3306
+USER        = wxMailto
+PASSWORD    = wxMailto
+DATABASE    = wxMailto
