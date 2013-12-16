@@ -25,10 +25,11 @@ public:
 		AUTHENTICATE=0,
 #endif
 		GPG,
+		PASSWORD,
+		POCO,
 #if 0
 		IDNA,
 		MIME,
-		POCO,
 		TLS,
 		MESSAGESTORE,
 		SESSIONMANAGER,
