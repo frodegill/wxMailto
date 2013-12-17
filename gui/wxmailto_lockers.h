@@ -16,9 +16,9 @@ namespace wxMailto
 
 struct GlobalLockers {
 	wxCriticalSection m_block_exit_lock;
+	wxCriticalSection m_next_credential_id_lock;
 #if 0
 	wxCriticalSection m_generic_property_lock;
-	wxCriticalSection m_next_message_id_lock;
 	wxCriticalSection m_next_multipart_id_lock;
 #endif
 };

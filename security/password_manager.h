@@ -36,14 +36,16 @@ public:
 	wxmailto_status SetSudoPassword(wxString& password);
 	void ForgetSudoPassword();
 
-	wxmailto_status GetCredential(const wxString& id, wxString& username, wxString& password);
-	wxmailto_status SetCredential(const wxString& id, const wxString& username, const wxString& password);
-	wxmailto_status ForgetCredential(const wxString& id);
+	wxmailto_status GetLocation(wxUInt id, wxString& location);
+	wxmailto_status GetCredential(wxUInt id, wxString& location, wxString& username, wxString& password);
+	wxmailto_status SetCredential(wxUInt& id, const wxString& location, const wxString& username, const wxString& password);
+	wxmailto_status ForgetCredential(wxUInt id);
 
 private:
-	wxmailto_status LoadCredential(const wxString& id, wxString& encrypted_username, wxString& encrypted_password);
-	wxmailto_status SaveCredential(const wxString& id, const wxString& encrypted_username, const wxString& encrypted_password);
-	wxmailto_status DeleteCredential(const wxString& id);
+	wxmailto_status LoadLocation(wxUInt id, wxString& encrypted_location);
+	wxmailto_status LoadCredential(wxUInt id, wxString& encrypted_location, wxString& encrypted_username, wxString& encrypted_password);
+	wxmailto_status SaveCredential(wxUInt& id, const wxString& encrypted_location, const wxString& encrypted_username, const wxString& encrypted_password);
+	wxmailto_status DeleteCredential(wxUInt id);
 
 	wxmailto_status CreateHash(const wxString& secret, const wxString& salt, wxString& hashed_value);
 
