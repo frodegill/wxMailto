@@ -35,5 +35,5 @@ sudo odbcinst -i -l -d -f /usr/share/libmyodbc/odbcinst.ini
 odbcinst -i -h -s -f ./datasource.template
 
 
-#Compile appliction
+#Compile application
 make && sudo make install
