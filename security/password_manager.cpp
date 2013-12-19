@@ -12,7 +12,9 @@
 #endif
 
 #include <Poco/Data/BLOB.h>
+#include "Poco/Data/RecordSet.h"
 
+#include "../defines.h"
 #include "../gui/app_module_manager.h"
 #include "../gui/wxmailto_app.h"
 #include "../storage/persistent_object.h"
@@ -76,15 +78,11 @@ wxmailto_status PasswordManager::GetMasterPassphrase(wxString& passphrase)
 	return ID_OK;
 }
 
-wxmailto_status PasswordManager::SetMasterPassphrase(wxString& passphrase)
+wxmailto_status PasswordManager::SetMasterPassphrase(const wxString& old_passphrase, const wxString& new_passphrase)
 {
-#ifdef WIPE_AFTER_USE
-	passphrase.WipeAfterUse();
-#endif
-
 	ForgetMasterPassphrase();
 
-	const wxScopedCharBuffer utf8_buffer = passphrase.ToUTF8();
+	const wxScopedCharBuffer utf8_buffer = new_passphrase.ToUTF8();
 	m_obfuscated_master_password_length = utf8_buffer.length();
 	if (0<m_obfuscated_master_password_length)
 	{
@@ -97,7 +95,8 @@ wxmailto_status PasswordManager::SetMasterPassphrase(wxString& passphrase)
 			m_obfuscated_master_password[i] = utf8_buffer[i]^m_master_password_obfuscator[i];
 		}
 	}
-	return ID_OK;
+
+	return UpdateCredentialPassphrase(old_passphrase, new_passphrase);
 }
 
 void PasswordManager::ForgetMasterPassphrase()
@@ -181,6 +180,18 @@ wxmailto_status PasswordManager::GetCredential(wxUInt id, wxString& location, wx
 {
 	wxmailto_status status;
 	wxString master_passphrase;
+#ifdef WIPE_AFTER_USE
+	master_passphrase.WipeAfterUse();
+#endif
+	if (ID_OK != (status=GetMasterPassphrase(master_passphrase)))
+		return status;
+
+	return GetCredential(master_passphrase, id, location, username, password);
+}
+
+wxmailto_status PasswordManager::GetCredential(const wxString& master_passphrase, wxUInt id, wxString& location, wxString& username, wxString& password)
+{
+	wxmailto_status status;
 	wxString hashed_location_master_passphrase;
 	wxString hashed_username_master_passphrase;
 	wxString hashed_password_master_passphrase;
@@ -188,13 +199,11 @@ wxmailto_status PasswordManager::GetCredential(wxUInt id, wxString& location, wx
 	location.WipeAfterUse();
 	username.WipeAfterUse();
 	password.WipeAfterUse();
-	master_passphrase.WipeAfterUse();
 	hashed_location_master_passphrase.WipeAfterUse();
 	hashed_username_master_passphrase.WipeAfterUse();
 	hashed_password_master_passphrase.WipeAfterUse();
 #endif
-	if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
-	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@location@wxMailto",id), hashed_location_master_passphrase)) ||
+	if (ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@location@wxMailto",id), hashed_location_master_passphrase)) ||
 	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@username@wxMailto",id), hashed_username_master_passphrase)) ||
 	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@password@wxMailto",id), hashed_password_master_passphrase)))
 		return status;
@@ -216,6 +225,18 @@ wxmailto_status PasswordManager::SetCredential(wxUInt& id, const wxString& locat
 {
 	wxmailto_status status;
 	wxString master_passphrase;
+#ifdef WIPE_AFTER_USE
+	master_passphrase.WipeAfterUse();
+#endif
+	if (ID_OK != (status=GetMasterPassphrase(master_passphrase)))
+		return status;
+
+	return SetCredential(master_passphrase, id, location, username, password);
+}
+
+wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase, wxUInt& id, const wxString& location, const wxString& username, const wxString& password)
+{
+	wxmailto_status status;
 	wxString hashed_location_master_passphrase;
 	wxString hashed_username_master_passphrase;
 	wxString hashed_password_master_passphrase;
@@ -223,13 +244,11 @@ wxmailto_status PasswordManager::SetCredential(wxUInt& id, const wxString& locat
 	location.WipeAfterUse();
 	username.WipeAfterUse();
 	password.WipeAfterUse();
-	master_passphrase.WipeAfterUse();
 	hashed_location_master_passphrase.WipeAfterUse();
 	hashed_username_master_passphrase.WipeAfterUse();
 	hashed_password_master_passphrase.WipeAfterUse();
 #endif
-	if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
-	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@location@wxMailto",id), hashed_location_master_passphrase)) ||
+	if (ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@location@wxMailto",id), hashed_location_master_passphrase)) ||
 	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@username@wxMailto",id), hashed_username_master_passphrase)) ||
 	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@password@wxMailto",id), hashed_password_master_passphrase)))
 		return status;
@@ -370,6 +389,107 @@ wxmailto_status PasswordManager::SaveCredential(wxUInt& id, const wxString& encr
 	poco_glue->CommitTransaction(session);
 	poco_glue->ReleaseSession(session);
 
+	return ID_OK;
+}
+
+wxmailto_status PasswordManager::UpdateCredentialPassphrase(const wxString& old_passphrase, const wxString& new_passphrase)
+{
+	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
+	PocoGlue* poco_glue = wxGetApp().GetAppModuleManager()->GetPocoGlue();
+	if (!gpg_manager || !poco_glue)
+		return LOGERROR(ID_EXIT_REQUESTED);
+
+	Poco::Data::Session* session;
+	wxmailto_status status;
+	if (ID_OK!=(status=poco_glue->CreateSession(session)))
+	{
+		return status;
+	}
+
+	wxUInt count, max;
+	*session << "SELECT COUNT(*),MAX(id) FROM credentials",
+			Poco::Data::into(count),
+			Poco::Data::into(max),
+			Poco::Data::now;
+
+	//Reserve new IDs
+	PersistentProperty* property = new PersistentProperty();
+	if (!property)
+	{
+		poco_glue->ReleaseSession(session);
+		return LOGERROR(ID_OUT_OF_MEMORY);
+	}
+
+	wxUint32 first_available_id;
+	if (ID_OK != (status=property->Initialize(NEXT_CREDENTIAL_ID, &wxGetApp().GetGlobalLockers()->m_next_credential_id_lock)) ||
+	    ID_OK != (status=property->GetNextAvailableId(first_available_id, count)))
+	{
+		delete property;
+		poco_glue->ReleaseSession(session);
+		return status;
+	}
+	delete property;
+
+	//Start transaction
+	poco_glue->StartTransaction(session);
+
+	//Select all existing IDs
+	Poco::Data::Statement* select_ids = new Poco::Data::Statement(*session);
+	if (!select_ids)
+	{
+		poco_glue->RollbackTransaction(session);
+		poco_glue->ReleaseSession(session);
+		return LOGERROR(ID_OUT_OF_MEMORY);
+	}
+	*select_ids << "SELECT id FROM credentials WHERE id<=?",
+			Poco::Data::use(max);
+	select_ids->execute();
+	Poco::Data::RecordSet* select_ids_rs = new Poco::Data::RecordSet(*select_ids);
+	if (!select_ids_rs)
+	{
+		delete select_ids;
+		poco_glue->RollbackTransaction(session);
+		poco_glue->ReleaseSession(session);
+		return LOGERROR(ID_OUT_OF_MEMORY);
+	}
+
+	//iterate
+	wxUInt id, new_id;
+	wxBool more = select_ids_rs->moveFirst();
+	wxString location;
+	wxString username;
+	wxString password;
+#ifdef WIPE_AFTER_USE
+	location.WipeAfterUse();
+	username.WipeAfterUse();
+	password.WipeAfterUse();
+#endif
+	while (more)
+	{
+		id = select_ids_rs->value(0).convert<wxUInt>();
+		new_id = first_available_id++;
+		if (ID_OK != (status=GetCredential(old_passphrase, id, location, username, password)) ||
+		    ID_OK != (status=SetCredential(new_passphrase, new_id, location, username, password)))
+		{
+			delete select_ids_rs;
+			delete select_ids;
+			poco_glue->RollbackTransaction(session);
+			poco_glue->ReleaseSession(session);
+			return status;
+		}
+
+		more = select_ids_rs->moveNext();
+	}
+	delete select_ids_rs;
+	delete select_ids;
+	
+	*session << "DELETE FROM credentials WHERE id<=?",
+			Poco::Data::use(max),
+			Poco::Data::now;
+
+	poco_glue->CommitTransaction(session);
+	poco_glue->ReleaseSession(session);
+	
 	return ID_OK;
 }
 
