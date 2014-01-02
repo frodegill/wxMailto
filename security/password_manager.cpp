@@ -1,5 +1,5 @@
 
-// Copyright (C) 2013  Frode Roxrud Gill
+// Copyright (C) 2013-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -35,7 +35,11 @@ PasswordManager::PasswordManager()
 
 PasswordManager::~PasswordManager()
 {
-	ForgetMasterPassphrase();
+	{
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
+
+		ForgetMasterPassphrase();
+	}
 }
 
 wxmailto_status PasswordManager::Initialize()
@@ -58,57 +62,68 @@ wxmailto_status PasswordManager::GetMasterPassphrase(wxString& passphrase)
 	passphrase.WipeAfterUse();
 #endif
 
-	if (!m_obfuscated_master_password || 0==m_obfuscated_master_password_length)
 	{
-		passphrase.Empty();
-		return ID_OK;
-	}
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
 
-	char* utf8_buffer = new char[m_obfuscated_master_password_length];
-	size_t i;
-	for (i=0; m_obfuscated_master_password_length>i; i++)
-	{
-		utf8_buffer[i] = m_obfuscated_master_password[i]^m_master_password_obfuscator[i];
-	}
-	passphrase = wxString::FromUTF8(utf8_buffer, m_obfuscated_master_password_length);
+		if (!m_obfuscated_master_password || 0==m_obfuscated_master_password_length)
+		{
+			passphrase.Empty();
+			return ID_OK;
+		}
 
-	memset(utf8_buffer, 0, m_obfuscated_master_password_length);
-	delete[] utf8_buffer;
+		char* utf8_buffer = new char[m_obfuscated_master_password_length];
+		size_t i;
+		for (i=0; m_obfuscated_master_password_length>i; i++)
+		{
+			utf8_buffer[i] = m_obfuscated_master_password[i]^m_master_password_obfuscator[i];
+		}
+		passphrase = wxString::FromUTF8(utf8_buffer, m_obfuscated_master_password_length);
+
+		memset(utf8_buffer, 0, m_obfuscated_master_password_length);
+		delete[] utf8_buffer;
+	}
 
 	return ID_OK;
 }
 
 wxmailto_status PasswordManager::SetMasterPassphrase(const wxString& old_passphrase, const wxString& new_passphrase)
 {
-	ForgetMasterPassphrase();
-
-	const wxScopedCharBuffer utf8_buffer = new_passphrase.ToUTF8();
-	m_obfuscated_master_password_length = utf8_buffer.length();
-	if (0<m_obfuscated_master_password_length)
 	{
-		m_obfuscated_master_password = new char[m_obfuscated_master_password_length];
-		m_master_password_obfuscator = new char[m_obfuscated_master_password_length];
-		size_t i;
-		for (i=0; m_obfuscated_master_password_length<i; i++)
-		{
-			m_master_password_obfuscator[i] = RANDOM(256);
-			m_obfuscated_master_password[i] = utf8_buffer[i]^m_master_password_obfuscator[i];
-		}
-	}
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
 
-	return UpdateCredentialPassphrase(old_passphrase, new_passphrase);
+		ForgetMasterPassphrase();
+
+		const wxScopedCharBuffer utf8_buffer = new_passphrase.ToUTF8();
+		m_obfuscated_master_password_length = utf8_buffer.length();
+		if (0<m_obfuscated_master_password_length)
+		{
+			m_obfuscated_master_password = new char[m_obfuscated_master_password_length];
+			m_master_password_obfuscator = new char[m_obfuscated_master_password_length];
+			size_t i;
+			for (i=0; m_obfuscated_master_password_length<i; i++)
+			{
+				m_master_password_obfuscator[i] = RANDOM(256);
+				m_obfuscated_master_password[i] = utf8_buffer[i]^m_master_password_obfuscator[i];
+			}
+		}
+		return UpdateCredentialPassphrase(old_passphrase, new_passphrase);
+	}
 }
 
 void PasswordManager::ForgetMasterPassphrase()
 {
-	if (m_obfuscated_master_password)
 	{
-		memset(m_obfuscated_master_password, 0, m_obfuscated_master_password_length);
-		memset(m_master_password_obfuscator, 0, m_obfuscated_master_password_length);
-		delete[] m_obfuscated_master_password;
-		delete[] m_master_password_obfuscator;
-		m_obfuscated_master_password = m_master_password_obfuscator = NULL;
-		m_obfuscated_master_password_length = 0;
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
+
+		if (m_obfuscated_master_password)
+		{
+			memset(m_obfuscated_master_password, 0, m_obfuscated_master_password_length);
+			memset(m_master_password_obfuscator, 0, m_obfuscated_master_password_length);
+			delete[] m_obfuscated_master_password;
+			delete[] m_master_password_obfuscator;
+			m_obfuscated_master_password = m_master_password_obfuscator = NULL;
+			m_obfuscated_master_password_length = 0;
+		}
 	}
 }
 
@@ -122,12 +137,17 @@ wxmailto_status PasswordManager::GetSudoPassword(wxString& password)
 	master_passphrase.WipeAfterUse();
 	hashed_master_passphrase.WipeAfterUse();
 #endif
-	if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
-	    ID_OK != (status=CreateHash(master_passphrase, "sudo@wxMailto", hashed_master_passphrase)))
-		return status;
 
-	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-	return gpg_manager->Decrypt(m_encrypted_sudo_password, hashed_master_passphrase, password);
+	{
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
+
+		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
+		    ID_OK != (status=CreateHash(master_passphrase, "sudo@wxMailto", hashed_master_passphrase)))
+			return status;
+
+		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
+		return gpg_manager->Decrypt(m_encrypted_sudo_password, hashed_master_passphrase, password);
+	}
 }
 
 wxmailto_status PasswordManager::SetSudoPassword(wxString& password)
@@ -140,17 +160,26 @@ wxmailto_status PasswordManager::SetSudoPassword(wxString& password)
 	master_passphrase.WipeAfterUse();
 	hashed_master_passphrase.WipeAfterUse();
 #endif
-	if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
-	    ID_OK != (status=CreateHash(master_passphrase, "sudo@wxMailto", hashed_master_passphrase)))
-		return status;
 
-	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-	return gpg_manager->Encrypt(password, hashed_master_passphrase, m_encrypted_sudo_password);
+	{
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
+
+		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
+		    ID_OK != (status=CreateHash(master_passphrase, "sudo@wxMailto", hashed_master_passphrase)))
+			return status;
+
+		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
+		return gpg_manager->Encrypt(password, hashed_master_passphrase, m_encrypted_sudo_password);
+	}
 }
 
 void PasswordManager::ForgetSudoPassword()
 {
-	m_encrypted_sudo_password.Clear();
+	{
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
+
+		m_encrypted_sudo_password.Clear();
+	}
 }
 
 wxmailto_status PasswordManager::GetLocation(wxUInt id, wxString& location)
@@ -163,15 +192,20 @@ wxmailto_status PasswordManager::GetLocation(wxUInt id, wxString& location)
 	master_passphrase.WipeAfterUse();
 	hashed_location_master_passphrase.WipeAfterUse();
 #endif
-	if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
-	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@location@wxMailto",id), hashed_location_master_passphrase)))
-		return status;
 
-	wxString encrypted_location;
-	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-	if (ID_OK != (status=LoadLocation(id, encrypted_location)) ||
-	    ID_OK != (status=gpg_manager->Decrypt(encrypted_location, hashed_location_master_passphrase, location)))
-		return status;
+	{
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
+
+		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
+		    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@location@wxMailto",id), hashed_location_master_passphrase)))
+			return status;
+
+		wxString encrypted_location;
+		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
+		if (ID_OK != (status=LoadLocation(id, encrypted_location)) ||
+		    ID_OK != (status=gpg_manager->Decrypt(encrypted_location, hashed_location_master_passphrase, location)))
+			return status;
+	}
 
 	return ID_OK;
 }
@@ -183,10 +217,15 @@ wxmailto_status PasswordManager::GetCredential(wxUInt id, wxString& location, wx
 #ifdef WIPE_AFTER_USE
 	master_passphrase.WipeAfterUse();
 #endif
-	if (ID_OK != (status=GetMasterPassphrase(master_passphrase)))
-		return status;
 
-	return GetCredential(master_passphrase, id, location, username, password);
+	{
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
+
+		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)))
+			return status;
+
+		return GetCredential(master_passphrase, id, location, username, password);
+	}
 }
 
 wxmailto_status PasswordManager::GetCredential(const wxString& master_passphrase, wxUInt id, wxString& location, wxString& username, wxString& password)
@@ -228,10 +267,15 @@ wxmailto_status PasswordManager::SetCredential(wxUInt& id, const wxString& locat
 #ifdef WIPE_AFTER_USE
 	master_passphrase.WipeAfterUse();
 #endif
-	if (ID_OK != (status=GetMasterPassphrase(master_passphrase)))
-		return status;
 
-	return SetCredential(master_passphrase, id, location, username, password);
+	{
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
+
+		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)))
+			return status;
+
+		return SetCredential(master_passphrase, id, location, username, password);
+	}
 }
 
 wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase, wxUInt& id, const wxString& location, const wxString& username, const wxString& password)
@@ -267,7 +311,11 @@ wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase
 
 wxmailto_status PasswordManager::ForgetCredential(wxUInt id)
 {
-	return DeleteCredential(id);
+	{
+		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
+
+		return DeleteCredential(id);
+	}
 }
 
 wxmailto_status PasswordManager::LoadLocation(wxUInt id, wxString& encrypted_location)
