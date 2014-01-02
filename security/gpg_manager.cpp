@@ -1,5 +1,5 @@
 
-// Copyright (C) 2013  Frode Roxrud Gill
+// Copyright (C) 2013-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -138,17 +138,35 @@ wxmailto_status GPGManager::GetSecretKeys(GPGKeyList& key_list, wxBool& truncate
 	return ConvertStatus(err);
 }
 
-wxmailto_status GPGManager::Decrypt(const wxString& WXUNUSED(encrypted), const wxString& WXUNUSED(key), wxString& WXUNUSED(plaintext))
+wxmailto_status GPGManager::Decrypt(const wxString& encrypted, const wxString& key, wxString& plaintext)
+{
+	const wxScopedCharBuffer encrypted_buffer = encrypted.ToUTF8();
+	return Decrypt(reinterpret_cast<const wxUint8*>(encrypted_buffer.data()), encrypted_buffer.length(), key, plaintext);
+}
+
+wxmailto_status GPGManager::Decrypt(const wxUint8* WXUNUSED(encrypted), const wxSizeT& WXUNUSED(encrypted_length), const wxString& WXUNUSED(key), wxString& WXUNUSED(plaintext))
 {
 	return ID_NOT_IMPLEMENTED;
 }
 
-wxmailto_status GPGManager::Encrypt(const wxString& WXUNUSED(plaintext), const wxString& WXUNUSED(key), wxString& WXUNUSED(encrypted))
+wxmailto_status GPGManager::Encrypt(const wxString& plaintext, const wxString& key, wxString& encrypted)
+{
+	const wxScopedCharBuffer plaintext_buffer = plaintext.ToUTF8();
+	return Encrypt(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), key, encrypted);
+}
+
+wxmailto_status GPGManager::Encrypt(const wxUint8* WXUNUSED(plain), const wxSizeT& WXUNUSED(plain_length), const wxString& WXUNUSED(key), wxString& WXUNUSED(encrypted))
 {
 	return ID_NOT_IMPLEMENTED;
 }
 
-wxmailto_status GPGManager::Hash(const wxString& WXUNUSED(plaintext), wxString& WXUNUSED(hash))
+wxmailto_status GPGManager::Hash(const wxString& plaintext, wxString& hash)
+{
+	const wxScopedCharBuffer plaintext_buffer = plaintext.ToUTF8();
+	return Hash(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), hash);
+}
+
+wxmailto_status GPGManager::Hash(const wxUint8* WXUNUSED(plain), const wxSizeT& WXUNUSED(plain_length), wxString& WXUNUSED(hash))
 {
 	return ID_NOT_IMPLEMENTED;
 }

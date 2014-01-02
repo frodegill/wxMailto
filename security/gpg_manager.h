@@ -1,7 +1,7 @@
 #ifndef _GPG_MANAGER_H_
 #define _GPG_MANAGER_H_
 
-// Copyright (C) 2013  Frode Roxrud Gill
+// Copyright (C) 2013-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -33,8 +33,11 @@ public:
 
 public:
 	wxmailto_status Decrypt(const wxString& encrypted, const wxString& key, wxString& plaintext);
+	wxmailto_status Decrypt(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxString& key, wxString& plaintext);
 	wxmailto_status Encrypt(const wxString& plaintext, const wxString& key, wxString& encrypted);
+	wxmailto_status Encrypt(const wxUint8* plain, const wxSizeT& plain_length, const wxString& key, wxString& encrypted);
 	wxmailto_status Hash(const wxString& plaintext, wxString& hash);
+	wxmailto_status Hash(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash);
 	
 private:
 	wxmailto_status ConvertStatus(gpgme_error_t err);
