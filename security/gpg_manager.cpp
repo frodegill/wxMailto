@@ -9,16 +9,20 @@
 #ifdef WX_PRECOMP
 # include "../pch.h"
 #else
+# include <gcrypt.h>
 # include <locale.h>
 # include "gpgme.h"
 #endif
 
 #include "../gui/app_module_manager.h"
 #include "../gui/wxmailto_app.h"
+#include "../string/stringutils.h"
 #include "gpg_manager.h"
 
 
 using namespace wxMailto;
+
+#define SHA512_HASH_LEN (64)
 
 
 GPGManager::GPGManager()
@@ -166,9 +170,16 @@ wxmailto_status GPGManager::Hash(const wxString& plaintext, wxString& hash)
 	return Hash(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), hash);
 }
 
-wxmailto_status GPGManager::Hash(const wxUint8* WXUNUSED(plain), const wxSizeT& WXUNUSED(plain_length), wxString& WXUNUSED(hash))
+wxmailto_status GPGManager::Hash(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash)
 {
-	return ID_NOT_IMPLEMENTED;
+	wxUint8* digest = new wxUint8[SHA512_HASH_LEN];
+	if (!digest)
+		return LOGERROR(ID_OUT_OF_MEMORY);
+
+	gcry_md_hash_buffer(GCRY_MD_SHA512, digest, plain, plain_length);
+	wxmailto_status status = StringUtils::ByteArrayToHexString(digest, SHA512_HASH_LEN, hash);
+	delete[] digest;
+	return status;
 }
 
 wxmailto_status GPGManager::ConvertStatus(gpgme_error_t err)

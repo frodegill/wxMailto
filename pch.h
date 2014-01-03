@@ -1,7 +1,8 @@
 
-// Copyright (C) 2013  Frode Roxrud Gill
+// Copyright (C) 2013-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
+#include <gcrypt.h>
 #include <locale.h>
 
 #include "gpgme.h"
