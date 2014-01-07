@@ -24,6 +24,8 @@ using namespace wxMailto;
 
 #define SHA512_HASH_LEN (64)
 
+static const wxUint8 g_iv[] = {'w'^0x55,'x'^0x55,'M'^0x55,'a'^0x55,'i'^0x55,'l'^0x55,'t'^0x55,'o'^0x55};
+
 
 GPGManager::GPGManager()
 : wxMailto_Module()
@@ -46,6 +48,15 @@ wxmailto_status GPGManager::Initialize()
   if (GPG_ERR_NO_ERROR != gpgme_engine_check_version(GPGME_PROTOCOL_OpenPGP))
 		return LOGERROR(ID_GENERIC_ERROR);
 
+	if (!gcry_check_version(GCRYPT_VERSION))
+	{
+		return LOGERROR(ID_GENERIC_ERROR);
+	}
+	gcry_control(GCRYCTL_SUSPEND_SECMEM_WARN);
+	gcry_control(GCRYCTL_INIT_SECMEM, 16384, 0);
+	gcry_control(GCRYCTL_RESUME_SECMEM_WARN);
+	gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
+
 	wxGetApp().GetAppModuleManager()->RegisterModule(this);
 
 
@@ -59,6 +70,8 @@ wxmailto_status GPGManager::PrepareShutdown()
 {
 	WaitForNoMoreDependencies();
 	wxGetApp().GetAppModuleManager()->UnregisterModule(this);
+
+	gcry_control(GCRYCTL_TERM_SECMEM);
 
 	return ID_OK;
 }
@@ -142,35 +155,91 @@ wxmailto_status GPGManager::GetSecretKeys(GPGKeyList& key_list, wxBool& truncate
 	return ConvertStatus(err);
 }
 
-wxmailto_status GPGManager::Decrypt(const wxString& encrypted, const wxString& key, wxString& plaintext)
+wxmailto_status GPGManager::DecryptWithPassword(const wxString& encrypted, const wxString& key, wxString& plaintext)
 {
 	const wxScopedCharBuffer encrypted_buffer = encrypted.ToUTF8();
-	return Decrypt(reinterpret_cast<const wxUint8*>(encrypted_buffer.data()), encrypted_buffer.length(), key, plaintext);
+	return DecryptWithPassword(reinterpret_cast<const wxUint8*>(encrypted_buffer.data()), encrypted_buffer.length(), key, plaintext);
 }
 
-wxmailto_status GPGManager::Decrypt(const wxUint8* WXUNUSED(encrypted), const wxSizeT& WXUNUSED(encrypted_length), const wxString& WXUNUSED(key), wxString& WXUNUSED(plaintext))
+wxmailto_status GPGManager::DecryptWithPassword(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxString& key, wxString& plaintext)
 {
-	return ID_NOT_IMPLEMENTED;
+	const wxScopedCharBuffer key_buffer = key.ToUTF8();
+
+	size_t outsize = encrypted_length;
+	wxUint8* out = new wxUint8[outsize];
+	if (!out)
+		return LOGERROR(ID_OUT_OF_MEMORY);
+	
+	gcry_error_t err;
+	gcry_cipher_hd_t handle;
+	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_open(&handle, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CBC, GCRY_CIPHER_SECURE|GCRY_CIPHER_CBC_MAC)))
+	{
+		delete[] out;
+		return LOGERROR(ConvertStatus(err));
+	}
+	
+	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_setkey(handle, key_buffer.data(), key_buffer.length())) ||
+	    GPG_ERR_NO_ERROR != (err=gcry_cipher_setiv(handle, g_iv, sizeof(g_iv)/sizeof(g_iv[0]))) ||
+	    GPG_ERR_NO_ERROR != (err=gcry_cipher_encrypt(handle, out, outsize, encrypted, encrypted_length)))
+	{
+		gcry_cipher_close(handle);
+		return LOGERROR(ConvertStatus(err));
+	}
+	
+	gcry_cipher_close(handle);
+
+	plaintext = wxString::FromUTF8(reinterpret_cast<const char*>(out), outsize);
+	delete[] out;
+
+	return ID_OK;
 }
 
-wxmailto_status GPGManager::Encrypt(const wxString& plaintext, const wxString& key, wxString& encrypted)
+wxmailto_status GPGManager::EncryptWithPassword(const wxString& plaintext, const wxString& key, wxString& encrypted)
 {
 	const wxScopedCharBuffer plaintext_buffer = plaintext.ToUTF8();
-	return Encrypt(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), key, encrypted);
+	return EncryptWithPassword(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), key, encrypted);
 }
 
-wxmailto_status GPGManager::Encrypt(const wxUint8* WXUNUSED(plain), const wxSizeT& WXUNUSED(plain_length), const wxString& WXUNUSED(key), wxString& WXUNUSED(encrypted))
+wxmailto_status GPGManager::EncryptWithPassword(const wxUint8* plain, const wxSizeT& plain_length, const wxString& key, wxString& encrypted)
 {
-	return ID_NOT_IMPLEMENTED;
+	const wxScopedCharBuffer key_buffer = key.ToUTF8();
+
+	size_t outsize = plain_length;
+	wxUint8* out = new wxUint8[outsize];
+	if (!out)
+		return LOGERROR(ID_OUT_OF_MEMORY);
+	
+	gcry_error_t err;
+	gcry_cipher_hd_t handle;
+	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_open(&handle, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CBC, GCRY_CIPHER_SECURE|GCRY_CIPHER_CBC_MAC)))
+	{
+		delete[] out;
+		return LOGERROR(ConvertStatus(err));
+	}
+	
+	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_setkey(handle, key_buffer.data(), key_buffer.length())) ||
+	    GPG_ERR_NO_ERROR != (err=gcry_cipher_setiv(handle, g_iv, sizeof(g_iv)/sizeof(g_iv[0]))) ||
+	    GPG_ERR_NO_ERROR != (err=gcry_cipher_encrypt(handle, out, outsize, plain, plain_length)))
+	{
+		gcry_cipher_close(handle);
+		return LOGERROR(ConvertStatus(err));
+	}
+	
+	gcry_cipher_close(handle);
+
+	encrypted = wxString::FromUTF8(reinterpret_cast<const char*>(out), outsize);
+	delete[] out;
+
+	return ID_OK;
 }
 
-wxmailto_status GPGManager::Hash(const wxString& plaintext, wxString& hash)
+wxmailto_status GPGManager::HashWithPassword(const wxString& plaintext, wxString& hash)
 {
 	const wxScopedCharBuffer plaintext_buffer = plaintext.ToUTF8();
-	return Hash(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), hash);
+	return HashWithPassword(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), hash);
 }
 
-wxmailto_status GPGManager::Hash(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash)
+wxmailto_status GPGManager::HashWithPassword(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash)
 {
 	wxUint8* digest = new wxUint8[SHA512_HASH_LEN];
 	if (!digest)

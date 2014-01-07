@@ -32,12 +32,12 @@ public:
 	wxmailto_status GetSecretKeys(GPGKeyList& key_list, wxBool& truncated);
 
 public:
-	wxmailto_status Decrypt(const wxString& encrypted, const wxString& key, wxString& plaintext);
-	wxmailto_status Decrypt(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxString& key, wxString& plaintext);
-	wxmailto_status Encrypt(const wxString& plaintext, const wxString& key, wxString& encrypted);
-	wxmailto_status Encrypt(const wxUint8* plain, const wxSizeT& plain_length, const wxString& key, wxString& encrypted);
-	wxmailto_status Hash(const wxString& plaintext, wxString& hash);
-	wxmailto_status Hash(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash);
+	wxmailto_status DecryptWithPassword(const wxString& encrypted, const wxString& key, wxString& plaintext);
+	wxmailto_status DecryptWithPassword(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxString& key, wxString& plaintext);
+	wxmailto_status EncryptWithPassword(const wxString& plaintext, const wxString& key, wxString& encrypted);
+	wxmailto_status EncryptWithPassword(const wxUint8* plain, const wxSizeT& plain_length, const wxString& key, wxString& encrypted);
+	wxmailto_status HashWithPassword(const wxString& plaintext, wxString& hash);
+	wxmailto_status HashWithPassword(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash);
 	
 private:
 	wxmailto_status ConvertStatus(gpgme_error_t err);

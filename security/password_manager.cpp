@@ -146,7 +146,7 @@ wxmailto_status PasswordManager::GetSudoPassword(wxString& password)
 			return status;
 
 		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-		return gpg_manager->Decrypt(m_encrypted_sudo_password, hashed_master_passphrase, password);
+		return gpg_manager->DecryptWithPassword(m_encrypted_sudo_password, hashed_master_passphrase, password);
 	}
 }
 
@@ -169,7 +169,7 @@ wxmailto_status PasswordManager::SetSudoPassword(wxString& password)
 			return status;
 
 		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-		return gpg_manager->Encrypt(password, hashed_master_passphrase, m_encrypted_sudo_password);
+		return gpg_manager->EncryptWithPassword(password, hashed_master_passphrase, m_encrypted_sudo_password);
 	}
 }
 
@@ -203,7 +203,7 @@ wxmailto_status PasswordManager::GetLocation(wxUInt id, wxString& location)
 		wxString encrypted_location;
 		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
 		if (ID_OK != (status=LoadLocation(id, encrypted_location)) ||
-		    ID_OK != (status=gpg_manager->Decrypt(encrypted_location, hashed_location_master_passphrase, location)))
+		    ID_OK != (status=gpg_manager->DecryptWithPassword(encrypted_location, hashed_location_master_passphrase, location)))
 			return status;
 	}
 
@@ -252,9 +252,9 @@ wxmailto_status PasswordManager::GetCredential(const wxString& master_passphrase
 	wxString encrypted_password;
 	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
 	if (ID_OK != (status=LoadCredential(id, encrypted_location, encrypted_username, encrypted_password)) ||
-	    ID_OK != (status=gpg_manager->Decrypt(encrypted_location, hashed_location_master_passphrase, location)) ||
-	    ID_OK != (status=gpg_manager->Decrypt(encrypted_username, hashed_username_master_passphrase, username)) ||
-	    ID_OK != (status=gpg_manager->Decrypt(encrypted_password, hashed_password_master_passphrase, password)))
+	    ID_OK != (status=gpg_manager->DecryptWithPassword(encrypted_location, hashed_location_master_passphrase, location)) ||
+	    ID_OK != (status=gpg_manager->DecryptWithPassword(encrypted_username, hashed_username_master_passphrase, username)) ||
+	    ID_OK != (status=gpg_manager->DecryptWithPassword(encrypted_password, hashed_password_master_passphrase, password)))
 		return status;
 
 	return ID_OK;
@@ -301,9 +301,9 @@ wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase
 	wxString encrypted_username;
 	wxString encrypted_password;
 	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-	if (ID_OK != (status=gpg_manager->Encrypt(location, hashed_location_master_passphrase, encrypted_location)) ||
-	    ID_OK != (status=gpg_manager->Encrypt(username, hashed_username_master_passphrase, encrypted_username)) ||
-	    ID_OK != (status=gpg_manager->Encrypt(password, hashed_password_master_passphrase, encrypted_password)))
+	if (ID_OK != (status=gpg_manager->EncryptWithPassword(location, hashed_location_master_passphrase, encrypted_location)) ||
+	    ID_OK != (status=gpg_manager->EncryptWithPassword(username, hashed_username_master_passphrase, encrypted_username)) ||
+	    ID_OK != (status=gpg_manager->EncryptWithPassword(password, hashed_password_master_passphrase, encrypted_password)))
 		return status;
 
 	return SaveCredential(id, encrypted_location, encrypted_username, encrypted_password);
@@ -574,5 +574,5 @@ wxmailto_status PasswordManager::CreateHash(const wxString& secret, const wxStri
 	plaintext = secret+salt;
 	
 	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-	return gpg_manager->Hash(plaintext, hashed_value);
+	return gpg_manager->HashWithPassword(plaintext, hashed_value);
 }
