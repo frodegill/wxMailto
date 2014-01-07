@@ -172,7 +172,7 @@ wxmailto_status GPGManager::DecryptWithPassword(const wxUint8* encrypted, const 
 	
 	gcry_error_t err;
 	gcry_cipher_hd_t handle;
-	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_open(&handle, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CBC, GCRY_CIPHER_SECURE|GCRY_CIPHER_CBC_MAC)))
+	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_open(&handle, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CBC, GCRY_CIPHER_SECURE)))
 	{
 		delete[] out;
 		return LOGERROR(ConvertStatus(err));
@@ -211,7 +211,7 @@ wxmailto_status GPGManager::EncryptWithPassword(const wxUint8* plain, const wxSi
 	
 	gcry_error_t err;
 	gcry_cipher_hd_t handle;
-	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_open(&handle, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CBC, GCRY_CIPHER_SECURE|GCRY_CIPHER_CBC_MAC)))
+	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_open(&handle, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CBC, GCRY_CIPHER_SECURE)))
 	{
 		delete[] out;
 		return LOGERROR(ConvertStatus(err));
