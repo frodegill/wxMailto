@@ -53,6 +53,10 @@ private:
 
 	wxmailto_status CreateHash(const wxString& secret, const wxString& salt, wxString& hashed_value);
 
+public:
+	wxmailto_status GenericEncrypt(wxString& plaintext, wxString& encrypted, const wxString& salt = "generic@wxMailto");
+	wxmailto_status GenericDecrypt(const wxString& encrypted, wxString& plaintext, const wxString& salt = "generic@wxMailto");
+
 private:
 	char* m_obfuscated_master_password;
 	char* m_master_password_obfuscator;
