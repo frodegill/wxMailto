@@ -166,7 +166,7 @@ wxmailto_status GPGManager::DecryptWithPassword(const wxUint8* encrypted, const 
 	const wxScopedCharBuffer key_buffer = key.ToUTF8();
 
 	size_t outsize = encrypted_length;
-	wxUint8* out = new wxUint8[outsize];
+	wxUint8* out = reinterpret_cast<wxUint8*>(gcry_malloc_secure(outsize));
 	if (!out)
 		return LOGERROR(ID_OUT_OF_MEMORY);
 	
@@ -174,14 +174,15 @@ wxmailto_status GPGManager::DecryptWithPassword(const wxUint8* encrypted, const 
 	gcry_cipher_hd_t handle;
 	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_open(&handle, GCRY_CIPHER_AES256, GCRY_CIPHER_MODE_CBC, GCRY_CIPHER_SECURE)))
 	{
-		delete[] out;
+		gcry_free(out);
 		return LOGERROR(ConvertStatus(err));
 	}
 	
 	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_setkey(handle, key_buffer.data(), key_buffer.length())) ||
 	    GPG_ERR_NO_ERROR != (err=gcry_cipher_setiv(handle, g_iv, sizeof(g_iv)/sizeof(g_iv[0]))) ||
-	    GPG_ERR_NO_ERROR != (err=gcry_cipher_encrypt(handle, out, outsize, encrypted, encrypted_length)))
+	    GPG_ERR_NO_ERROR != (err=gcry_cipher_decrypt(handle, out, outsize, encrypted, encrypted_length)))
 	{
+		gcry_free(out);
 		gcry_cipher_close(handle);
 		return LOGERROR(ConvertStatus(err));
 	}
@@ -189,7 +190,7 @@ wxmailto_status GPGManager::DecryptWithPassword(const wxUint8* encrypted, const 
 	gcry_cipher_close(handle);
 
 	plaintext = wxString::FromUTF8(reinterpret_cast<const char*>(out), outsize);
-	delete[] out;
+	gcry_free(out);
 
 	return ID_OK;
 }
