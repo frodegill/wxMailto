@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Frode Roxrud Gill
+// Copyright (C) 2012-2014  Frode Roxrud Gill
 // See license.h for License
 
 #ifdef __GNUG__
@@ -164,12 +164,14 @@ wxmailto_status PocoGlue::LogError(const wxString& message)
 
 wxmailto_status PocoGlue::GetConnectionString(std::string& connection_string)
 {
-#if 0
+	wxmailto_status status;
+
 	wxConfigBase* config = wxConfigBase::Get();
 	wxASSERT(NULL!=config);
 	if (!config)
 		return LOGERROR(ID_NULL_POINTER);
 
+#if 0
 	wxString server, port, database, username, password;
 	config->Read("Server", &server, wxEmptyString);
 	if (server.IsEmpty())
@@ -183,7 +185,41 @@ wxmailto_status PocoGlue::GetConnectionString(std::string& connection_string)
 	config->Read("Username", &username, wxEmptyString);
 	config->Read("Password", &password, wxEmptyString);
 #endif
-	connection_string = "DSN=wxMailto";
+	wxString encrypted_connectionstring;
+	config->Read("connectionstring", &encrypted_connectionstring, wxEmptyString);
+	if (encrypted_connectionstring.IsEmpty())
+	{
+#if 0
+		wxString server, port, database, username, password;
+		if (ID_OK!=GetDatasourceInfo(server, port, database, username, password))
+			return LOGERROR(ID_INVALID_DATASOURCE);
+#endif
+		wxString plaintext = "DSN=wxMailto";
+#ifdef WIPE_AFTER_USE
+		plaintext.WipeAfterUse();
+#endif
+		if (ID_OK != (status=wxGetApp().GetAppModuleManager()->GetPasswordManager()->
+			GenericEncrypt(plaintext, encrypted_connectionstring, "dsn@wxMailto")))
+		{
+			return status;
+		}
+		config->Write("connectionstring", encrypted_connectionstring);
+	}
+	else
+	{
+		wxString plaintext;
+#ifdef WIPE_AFTER_USE
+		plaintext.WipeAfterUse();
+#endif
+
+		if (ID_OK != (status=wxGetApp().GetAppModuleManager()->GetPasswordManager()->
+			GenericDecrypt(encrypted_connectionstring, plaintext, "dsn@wxMailto")))
+		{
+			return status;
+		}
+
+		connection_string = plaintext;
+	}
 
 	return ID_OK;
 }
