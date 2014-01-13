@@ -67,8 +67,7 @@ wxmailto_status PasswordManager::GetMasterPassphrase(wxString& passphrase)
 
 		if (!m_obfuscated_master_password || 0==m_obfuscated_master_password_length)
 		{
-			passphrase.Empty();
-			return ID_OK;
+			SetMasterPassphrase(wxEmptyString, "ToDo: get passphrase");
 		}
 
 		char* utf8_buffer = new char[m_obfuscated_master_password_length];
@@ -100,7 +99,7 @@ wxmailto_status PasswordManager::SetMasterPassphrase(const wxString& old_passphr
 			m_obfuscated_master_password = new char[m_obfuscated_master_password_length];
 			m_master_password_obfuscator = new char[m_obfuscated_master_password_length];
 			size_t i;
-			for (i=0; m_obfuscated_master_password_length<i; i++)
+			for (i=0; m_obfuscated_master_password_length>i; i++)
 			{
 				m_master_password_obfuscator[i] = RANDOM(256);
 				m_obfuscated_master_password[i] = utf8_buffer[i]^m_master_password_obfuscator[i];
@@ -150,25 +149,35 @@ wxmailto_status PasswordManager::GetLocation(wxUInt id, wxString& location)
 {
 	wxmailto_status status;
 	wxString master_passphrase;
-	wxString hashed_location_master_passphrase;
 #ifdef WIPE_AFTER_USE
 	location.WipeAfterUse();
 	master_passphrase.WipeAfterUse();
-	hashed_location_master_passphrase.WipeAfterUse();
 #endif
 
 	{
 		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
 
+		wxUint8* derived_location_master_key = new wxUint8[DERIVED_KEY_LEN];
+		if (!derived_location_master_key)
+			return LOGERROR(ID_OUT_OF_MEMORY);
+
 		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
-		    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@location@wxMailto",id), hashed_location_master_passphrase)))
+		    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@location@wxMailto",id), derived_location_master_key)))
+		{
+			delete[] derived_location_master_key;
 			return status;
+		}
 
 		wxString encrypted_location;
 		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
 		if (ID_OK != (status=LoadLocation(id, encrypted_location)) ||
-		    ID_OK != (status=gpg_manager->DecryptWithPassword(encrypted_location, hashed_location_master_passphrase, location)))
+		    ID_OK != (status=gpg_manager->DecryptWithDerivedKey(encrypted_location, derived_location_master_key, location)))
+		{
+			delete[] derived_location_master_key;
 			return status;
+		}
+
+		delete[] derived_location_master_key;
 	}
 
 	return ID_OK;
@@ -195,32 +204,51 @@ wxmailto_status PasswordManager::GetCredential(wxUInt id, wxString& location, wx
 wxmailto_status PasswordManager::GetCredential(const wxString& master_passphrase, wxUInt id, wxString& location, wxString& username, wxString& password)
 {
 	wxmailto_status status;
-	wxString hashed_location_master_passphrase;
-	wxString hashed_username_master_passphrase;
-	wxString hashed_password_master_passphrase;
 #ifdef WIPE_AFTER_USE
 	location.WipeAfterUse();
 	username.WipeAfterUse();
 	password.WipeAfterUse();
-	hashed_location_master_passphrase.WipeAfterUse();
-	hashed_username_master_passphrase.WipeAfterUse();
-	hashed_password_master_passphrase.WipeAfterUse();
 #endif
-	if (ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@location@wxMailto",id), hashed_location_master_passphrase)) ||
-	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@username@wxMailto",id), hashed_username_master_passphrase)) ||
-	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@password@wxMailto",id), hashed_password_master_passphrase)))
+
+	wxUint8* derived_location_master_key = new wxUint8[DERIVED_KEY_LEN];
+	wxUint8* derived_username_master_key = new wxUint8[DERIVED_KEY_LEN];
+	wxUint8* derived_password_master_key = new wxUint8[DERIVED_KEY_LEN];
+	if (!derived_location_master_key || !derived_username_master_key || !derived_password_master_key)
+	{
+		delete[] derived_location_master_key;
+		delete[] derived_username_master_key;
+		delete[] derived_password_master_key;
+		return LOGERROR(ID_OUT_OF_MEMORY);
+	}
+
+	if (ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@location@wxMailto",id), derived_location_master_key)) ||
+	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@username@wxMailto",id), derived_username_master_key)) ||
+	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@password@wxMailto",id), derived_password_master_key)))
+	{
+		delete[] derived_location_master_key;
+		delete[] derived_username_master_key;
+		delete[] derived_password_master_key;
 		return status;
+	}
 
 	wxString encrypted_location;
 	wxString encrypted_username;
 	wxString encrypted_password;
 	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
 	if (ID_OK != (status=LoadCredential(id, encrypted_location, encrypted_username, encrypted_password)) ||
-	    ID_OK != (status=gpg_manager->DecryptWithPassword(encrypted_location, hashed_location_master_passphrase, location)) ||
-	    ID_OK != (status=gpg_manager->DecryptWithPassword(encrypted_username, hashed_username_master_passphrase, username)) ||
-	    ID_OK != (status=gpg_manager->DecryptWithPassword(encrypted_password, hashed_password_master_passphrase, password)))
+	    ID_OK != (status=gpg_manager->DecryptWithDerivedKey(encrypted_location, derived_location_master_key, location)) ||
+	    ID_OK != (status=gpg_manager->DecryptWithDerivedKey(encrypted_username, derived_username_master_key, username)) ||
+	    ID_OK != (status=gpg_manager->DecryptWithDerivedKey(encrypted_password, derived_password_master_key, password)))
+	{
+		delete[] derived_location_master_key;
+		delete[] derived_username_master_key;
+		delete[] derived_password_master_key;
 		return status;
+	}
 
+	delete[] derived_location_master_key;
+	delete[] derived_username_master_key;
+	delete[] derived_password_master_key;
 	return ID_OK;
 }
 
@@ -245,31 +273,49 @@ wxmailto_status PasswordManager::SetCredential(wxUInt& id, const wxString& locat
 wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase, wxUInt& id, const wxString& location, const wxString& username, const wxString& password)
 {
 	wxmailto_status status;
-	wxString hashed_location_master_passphrase;
-	wxString hashed_username_master_passphrase;
-	wxString hashed_password_master_passphrase;
 #ifdef WIPE_AFTER_USE
 	location.WipeAfterUse();
 	username.WipeAfterUse();
 	password.WipeAfterUse();
-	hashed_location_master_passphrase.WipeAfterUse();
-	hashed_username_master_passphrase.WipeAfterUse();
-	hashed_password_master_passphrase.WipeAfterUse();
 #endif
-	if (ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@location@wxMailto",id), hashed_location_master_passphrase)) ||
-	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@username@wxMailto",id), hashed_username_master_passphrase)) ||
-	    ID_OK != (status=CreateHash(master_passphrase, wxString::Format("%d@password@wxMailto",id), hashed_password_master_passphrase)))
+	wxUint8* derived_location_master_key = new wxUint8[DERIVED_KEY_LEN];
+	wxUint8* derived_username_master_key = new wxUint8[DERIVED_KEY_LEN];
+	wxUint8* derived_password_master_key = new wxUint8[DERIVED_KEY_LEN];
+	if (!derived_location_master_key || !derived_username_master_key || !derived_password_master_key)
+	{
+		delete[] derived_location_master_key;
+		delete[] derived_username_master_key;
+		delete[] derived_password_master_key;
+		return LOGERROR(ID_OUT_OF_MEMORY);
+	}
+
+	if (ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@location@wxMailto",id), derived_location_master_key)) ||
+	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@username@wxMailto",id), derived_username_master_key)) ||
+	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@password@wxMailto",id), derived_password_master_key)))
+	{
+		delete[] derived_location_master_key;
+		delete[] derived_username_master_key;
+		delete[] derived_password_master_key;
 		return status;
+	}
 
 	wxString encrypted_location;
 	wxString encrypted_username;
 	wxString encrypted_password;
 	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-	if (ID_OK != (status=gpg_manager->EncryptWithPassword(location, hashed_location_master_passphrase, encrypted_location)) ||
-	    ID_OK != (status=gpg_manager->EncryptWithPassword(username, hashed_username_master_passphrase, encrypted_username)) ||
-	    ID_OK != (status=gpg_manager->EncryptWithPassword(password, hashed_password_master_passphrase, encrypted_password)))
+	if (ID_OK != (status=gpg_manager->EncryptWithDerivedKey(location, derived_location_master_key, encrypted_location)) ||
+	    ID_OK != (status=gpg_manager->EncryptWithDerivedKey(username, derived_username_master_key, encrypted_username)) ||
+	    ID_OK != (status=gpg_manager->EncryptWithDerivedKey(password, derived_password_master_key, encrypted_password)))
+	{
+		delete[] derived_location_master_key;
+		delete[] derived_username_master_key;
+		delete[] derived_password_master_key;
 		return status;
+	}
 
+	delete[] derived_location_master_key;
+	delete[] derived_username_master_key;
+	delete[] derived_password_master_key;
 	return SaveCredential(id, encrypted_location, encrypted_username, encrypted_password);
 }
 
@@ -406,6 +452,9 @@ wxmailto_status PasswordManager::SaveCredential(wxUInt& id, const wxString& encr
 
 wxmailto_status PasswordManager::UpdateCredentialPassphrase(const wxString& old_passphrase, const wxString& new_passphrase)
 {
+	if (old_passphrase.IsEmpty())
+		return ID_OK;
+
 	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
 	PocoGlue* poco_glue = wxGetApp().GetAppModuleManager()->GetPocoGlue();
 	if (!gpg_manager || !poco_glue)
@@ -538,29 +587,45 @@ wxmailto_status PasswordManager::CreateHash(const wxString& secret, const wxStri
 	plaintext = secret+salt;
 	
 	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-	return gpg_manager->HashWithPassword(plaintext, hashed_value);
+	return gpg_manager->Hash(plaintext, hashed_value);
+}
+
+wxmailto_status PasswordManager::CreateDerivedKey(const wxString& plaintext, const wxString& salt, wxUint8* derived_key)
+{
+	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
+	return gpg_manager->DeriveKey(plaintext, salt, derived_key);
 }
 
 wxmailto_status PasswordManager::GenericEncrypt(wxString& plaintext, wxString& encrypted, const wxString& salt)
 {
 	wxmailto_status status;
 	wxString master_passphrase;
-	wxString hashed_master_passphrase;
 #ifdef WIPE_AFTER_USE
 	plaintext.WipeAfterUse();
 	master_passphrase.WipeAfterUse();
-	hashed_master_passphrase.WipeAfterUse();
 #endif
 
 	{
 		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
 
+		wxUint8* derived_master_key = new wxUint8[DERIVED_KEY_LEN];
+		if (!derived_master_key)
+		{
+			delete[] derived_master_key;
+			return LOGERROR(ID_OUT_OF_MEMORY);
+		}
+
 		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
-		    ID_OK != (status=CreateHash(master_passphrase, salt, hashed_master_passphrase)))
+		    ID_OK != (status=CreateDerivedKey(master_passphrase, salt, derived_master_key)))
+		{
+			delete[] derived_master_key;
 			return status;
+		}
 
 		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-		return gpg_manager->EncryptWithPassword(plaintext, hashed_master_passphrase, encrypted);
+		status = gpg_manager->EncryptWithDerivedKey(plaintext, derived_master_key, encrypted);
+		delete[] derived_master_key;
+		return status;
 	}
 }
 
@@ -568,21 +633,31 @@ wxmailto_status PasswordManager::GenericDecrypt(const wxString& encrypted, wxStr
 {
 	wxmailto_status status;
 	wxString master_passphrase;
-	wxString hashed_master_passphrase;
 #ifdef WIPE_AFTER_USE
 	plaintext.WipeAfterUse();
 	master_passphrase.WipeAfterUse();
-	hashed_master_passphrase.WipeAfterUse();
 #endif
 
 	{
 		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
 
+		wxUint8* derived_master_key = new wxUint8[DERIVED_KEY_LEN];
+		if (!derived_master_key)
+		{
+			delete[] derived_master_key;
+			return LOGERROR(ID_OUT_OF_MEMORY);
+		}
+
 		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
-		    ID_OK != (status=CreateHash(master_passphrase, salt, hashed_master_passphrase)))
+		    ID_OK != (status=CreateDerivedKey(master_passphrase, salt, derived_master_key)))
+		{
+			delete[] derived_master_key;
 			return status;
+		}
 
 		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
-		return gpg_manager->DecryptWithPassword(encrypted, hashed_master_passphrase, plaintext);
+		status = gpg_manager->DecryptWithDerivedKey(encrypted, derived_master_key, plaintext);
+		delete[] derived_master_key;
+		return status;
 	}
 }

@@ -16,6 +16,12 @@
 namespace wxMailto
 {
 
+#define AES256_KEY_LEN  (32)
+#define SHA512_HASH_LEN (64)
+#define DERIVED_KEY_ITERATIONS (2048)
+#define DERIVED_KEY_LEN (SHA512_HASH_LEN)
+
+
 class GPGManager : public wxMailto_Module
 {
 public:
@@ -32,12 +38,16 @@ public:
 	wxmailto_status GetSecretKeys(GPGKeyList& key_list, wxBool& truncated);
 
 public:
-	wxmailto_status DecryptWithPassword(const wxString& encrypted, const wxString& key, wxString& plaintext);
-	wxmailto_status DecryptWithPassword(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxString& key, wxString& plaintext);
-	wxmailto_status EncryptWithPassword(const wxString& plaintext, const wxString& key, wxString& encrypted);
-	wxmailto_status EncryptWithPassword(const wxUint8* plain, const wxSizeT& plain_length, const wxString& key, wxString& encrypted);
-	wxmailto_status HashWithPassword(const wxString& plaintext, wxString& hash);
-	wxmailto_status HashWithPassword(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash);
+	wxmailto_status DecryptWithDerivedKey(const wxString& encrypted, const wxUint8* derived_key, wxString& plaintext);
+	wxmailto_status DecryptWithDerivedKey(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxUint8* derived_key, wxString& plaintext);
+	wxmailto_status EncryptWithDerivedKey(const wxString& plaintext, const wxUint8* derived_key, wxString& encrypted);
+	wxmailto_status EncryptWithDerivedKey(const wxUint8* plain, const wxSizeT& plain_length, const wxUint8* derived_key, wxString& encrypted);
+	wxmailto_status Hash(const wxString& plaintext, wxString& hash);
+	wxmailto_status Hash(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash);
+	wxmailto_status DeriveKey(const wxString& plaintext, const wxString& salt, wxUint8* derived_key);
+	wxmailto_status DeriveKey(const wxUint8* plain, const wxSizeT& plain_length,
+														const wxUint8* salt, const wxSizeT& salt_length,
+														wxUint8* derived_key);
 	
 private:
 	wxmailto_status ConvertStatus(gpgme_error_t err);
