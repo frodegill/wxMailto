@@ -19,7 +19,6 @@ namespace wxMailto
 #define AES256_KEY_LEN  (32)
 #define SHA512_HASH_LEN (64)
 #define DERIVED_KEY_ITERATIONS (2048)
-#define DERIVED_KEY_LEN (SHA512_HASH_LEN)
 
 
 class GPGManager : public wxMailto_Module
@@ -48,7 +47,13 @@ public:
 	wxmailto_status DeriveKey(const wxUint8* plain, const wxSizeT& plain_length,
 														const wxUint8* salt, const wxSizeT& salt_length,
 														wxUint8* derived_key);
-	
+
+public:
+	wxInt GetCipherAlgorithm() const {return GCRY_CIPHER_AES256;}
+	wxInt GetCipherMode() const {return GCRY_CIPHER_MODE_CBC;}
+	wxSizeT GetDerivedKeyLength() const;
+	wxSizeT GetRequiredBuffenLength(const wxSizeT& length, wxInt algorithm) const;
+
 private:
 	wxmailto_status ConvertStatus(gpgme_error_t err);
 	

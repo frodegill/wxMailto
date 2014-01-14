@@ -157,7 +157,9 @@ wxmailto_status PasswordManager::GetLocation(wxUInt id, wxString& location)
 	{
 		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
 
-		wxUint8* derived_location_master_key = new wxUint8[DERIVED_KEY_LEN];
+		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
+
+		wxUint8* derived_location_master_key = new wxUint8[gpg_manager->GetDerivedKeyLength()];
 		if (!derived_location_master_key)
 			return LOGERROR(ID_OUT_OF_MEMORY);
 
@@ -169,7 +171,6 @@ wxmailto_status PasswordManager::GetLocation(wxUInt id, wxString& location)
 		}
 
 		wxString encrypted_location;
-		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
 		if (ID_OK != (status=LoadLocation(id, encrypted_location)) ||
 		    ID_OK != (status=gpg_manager->DecryptWithDerivedKey(encrypted_location, derived_location_master_key, location)))
 		{
@@ -210,9 +211,11 @@ wxmailto_status PasswordManager::GetCredential(const wxString& master_passphrase
 	password.WipeAfterUse();
 #endif
 
-	wxUint8* derived_location_master_key = new wxUint8[DERIVED_KEY_LEN];
-	wxUint8* derived_username_master_key = new wxUint8[DERIVED_KEY_LEN];
-	wxUint8* derived_password_master_key = new wxUint8[DERIVED_KEY_LEN];
+	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
+
+	wxUint8* derived_location_master_key = new wxUint8[gpg_manager->GetDerivedKeyLength()];
+	wxUint8* derived_username_master_key = new wxUint8[gpg_manager->GetDerivedKeyLength()];
+	wxUint8* derived_password_master_key = new wxUint8[gpg_manager->GetDerivedKeyLength()];
 	if (!derived_location_master_key || !derived_username_master_key || !derived_password_master_key)
 	{
 		delete[] derived_location_master_key;
@@ -234,7 +237,6 @@ wxmailto_status PasswordManager::GetCredential(const wxString& master_passphrase
 	wxString encrypted_location;
 	wxString encrypted_username;
 	wxString encrypted_password;
-	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
 	if (ID_OK != (status=LoadCredential(id, encrypted_location, encrypted_username, encrypted_password)) ||
 	    ID_OK != (status=gpg_manager->DecryptWithDerivedKey(encrypted_location, derived_location_master_key, location)) ||
 	    ID_OK != (status=gpg_manager->DecryptWithDerivedKey(encrypted_username, derived_username_master_key, username)) ||
@@ -278,9 +280,12 @@ wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase
 	username.WipeAfterUse();
 	password.WipeAfterUse();
 #endif
-	wxUint8* derived_location_master_key = new wxUint8[DERIVED_KEY_LEN];
-	wxUint8* derived_username_master_key = new wxUint8[DERIVED_KEY_LEN];
-	wxUint8* derived_password_master_key = new wxUint8[DERIVED_KEY_LEN];
+
+	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
+
+	wxUint8* derived_location_master_key = new wxUint8[gpg_manager->GetDerivedKeyLength()];
+	wxUint8* derived_username_master_key = new wxUint8[gpg_manager->GetDerivedKeyLength()];
+	wxUint8* derived_password_master_key = new wxUint8[gpg_manager->GetDerivedKeyLength()];
 	if (!derived_location_master_key || !derived_username_master_key || !derived_password_master_key)
 	{
 		delete[] derived_location_master_key;
@@ -302,7 +307,6 @@ wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase
 	wxString encrypted_location;
 	wxString encrypted_username;
 	wxString encrypted_password;
-	GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
 	if (ID_OK != (status=gpg_manager->EncryptWithDerivedKey(location, derived_location_master_key, encrypted_location)) ||
 	    ID_OK != (status=gpg_manager->EncryptWithDerivedKey(username, derived_username_master_key, encrypted_username)) ||
 	    ID_OK != (status=gpg_manager->EncryptWithDerivedKey(password, derived_password_master_key, encrypted_password)))
@@ -608,7 +612,9 @@ wxmailto_status PasswordManager::GenericEncrypt(wxString& plaintext, wxString& e
 	{
 		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
 
-		wxUint8* derived_master_key = new wxUint8[DERIVED_KEY_LEN];
+		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
+
+		wxUint8* derived_master_key = new wxUint8[gpg_manager->GetDerivedKeyLength()];
 		if (!derived_master_key)
 		{
 			delete[] derived_master_key;
@@ -622,7 +628,6 @@ wxmailto_status PasswordManager::GenericEncrypt(wxString& plaintext, wxString& e
 			return status;
 		}
 
-		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
 		status = gpg_manager->EncryptWithDerivedKey(plaintext, derived_master_key, encrypted);
 		delete[] derived_master_key;
 		return status;
@@ -641,7 +646,9 @@ wxmailto_status PasswordManager::GenericDecrypt(const wxString& encrypted, wxStr
 	{
 		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
 
-		wxUint8* derived_master_key = new wxUint8[DERIVED_KEY_LEN];
+		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
+
+		wxUint8* derived_master_key = new wxUint8[gpg_manager->GetDerivedKeyLength()];
 		if (!derived_master_key)
 		{
 			delete[] derived_master_key;
@@ -655,7 +662,6 @@ wxmailto_status PasswordManager::GenericDecrypt(const wxString& encrypted, wxStr
 			return status;
 		}
 
-		GPGManager* gpg_manager = wxGetApp().GetAppModuleManager()->GetGPGManager();
 		status = gpg_manager->DecryptWithDerivedKey(encrypted, derived_master_key, plaintext);
 		delete[] derived_master_key;
 		return status;

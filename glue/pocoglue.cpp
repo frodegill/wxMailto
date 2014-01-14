@@ -194,7 +194,7 @@ wxmailto_status PocoGlue::GetConnectionString(std::string& connection_string)
 		if (ID_OK!=GetDatasourceInfo(server, port, database, username, password))
 			return LOGERROR(ID_INVALID_DATASOURCE);
 #endif
-		wxString plaintext = "DSN=wxMailto";
+		wxString plaintext = "DSN=wxMailto;;;;";
 #ifdef WIPE_AFTER_USE
 		plaintext.WipeAfterUse();
 #endif
