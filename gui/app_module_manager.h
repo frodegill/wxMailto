@@ -1,7 +1,7 @@
 #ifndef _APP_MODULE_MANAGER_H_
 #define _APP_MODULE_MANAGER_H_
 
-// Copyright (C) 2010-2013  Frode Roxrud Gill
+// Copyright (C) 2010-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -14,6 +14,7 @@
 #if 0
 #include "../glue/authenticateglue.h"
 #endif
+#include "../security/gcrypt_manager.h"
 #include "../security/gpg_manager.h"
 #include "../security/password_manager.h"
 #if 0
@@ -66,6 +67,7 @@ public:
 #if 0
 	AuthenticateGlue* GetAuthenticateGlue();
 #endif
+	GcryptManager* GetGcryptManager();
 	GPGManager* GetGPGManager();
 	PasswordManager* GetPasswordManager();
 #if 0
@@ -90,6 +92,7 @@ private:
 #if 0
 friend class AuthenticateGlue;
 #endif
+friend class GcryptManager;
 friend class GPGManager;
 friend class PasswordManager;
 #if 0

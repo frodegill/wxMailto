@@ -1,7 +1,7 @@
 #ifndef _WXMAILTO_MODULE_H_
 #define _WXMAILTO_MODULE_H_
 
-// Copyright (C) 2010-2013  Frode Roxrud Gill
+// Copyright (C) 2010-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -24,6 +24,7 @@ public:
 #if 0
 		AUTHENTICATE=0,
 #endif
+		GCRYPT,
 		GPG,
 		PASSWORD,
 		POCO,

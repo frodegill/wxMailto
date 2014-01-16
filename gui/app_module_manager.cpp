@@ -1,5 +1,5 @@
 
-// Copyright (C) 2010-2013  Frode Roxrud Gill
+// Copyright (C) 2010-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -99,6 +99,7 @@ wxmailto_status AppModuleManager::Initialize()
 #if 0
 			!(m_allocated_modules[wxMailto_Module::AUTHENTICATE]=new AuthenticateGlue()) ||
 #endif
+	    !(m_allocated_modules[wxMailto_Module::GCRYPT]=new GcryptManager()) ||
 	    !(m_allocated_modules[wxMailto_Module::GPG]=new GPGManager()) ||
 	    !(m_allocated_modules[wxMailto_Module::PASSWORD]=new PasswordManager()) ||
 #if 0
@@ -170,6 +171,11 @@ AuthenticateGlue* AppModuleManager::GetAuthenticateGlue()
 	return static_cast<AuthenticateGlue*>(GetGenericModule(wxMailto_Module::AUTHENTICATE));
 }
 #endif
+GcryptManager* AppModuleManager::GetGcryptManager()
+{
+	return static_cast<GcryptManager*>(GetGenericModule(wxMailto_Module::GCRYPT));
+}
+
 GPGManager* AppModuleManager::GetGPGManager()
 {
 	return static_cast<GPGManager*>(GetGenericModule(wxMailto_Module::GPG));
