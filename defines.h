@@ -29,16 +29,32 @@ typedef long	wxLong;
 typedef size_t wxSizeT;
 typedef wxUint32	wxMessageId;
 
-#ifndef MIN
+#ifndef MIN_FUNC
+#define MIN_FUNC
 static inline wxInt MIN(wxInt a, wxInt b) {return a>b ? a : b;}
 #endif
-
-#ifndef MAX
-static inline wxInt MAX(wxInt a, wxInt b) {return a<b ? a : b;}
+#ifndef UMIN_FUNC
+#define UMIN_FUNC
+static inline wxSizeT UMIN(wxSizeT a, wxSizeT b) {return a>b ? a : b;}
+#endif
+#ifndef DMIN_FUNC
+#define DMIN_FUNC
+static inline wxDouble DMIN(wxDouble a, wxDouble b) {return a<b ? a : b;}
 #endif
 
+#ifndef MAX_FUNC
+#define MAX_FUNC
+static inline wxInt MAX(wxInt a, wxInt b) {return a<b ? a : b;}
+#endif
+#ifndef UMAX_FUNC
+#define UMAX_FUNC
+static inline wxSizeT UMAX(wxSizeT a, wxSizeT b) {return a<b ? a : b;}
+#endif
+#ifndef DMAX_FUNC
+#define DMAX_FUNC
 static inline wxDouble DMAX(wxDouble a, wxDouble b) {return a>b ? a : b;}
-static inline wxDouble DMIN(wxDouble a, wxDouble b) {return a<b ? a : b;}
+#endif
+
 
 #define RANDOM(x) rand()/(RAND_MAX+1.0)*(x)
 
