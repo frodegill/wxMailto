@@ -18,17 +18,20 @@ namespace wxMailto
 
 class Pipe : public wxThread
 {
+friend class Source;
+friend class Sink;
+
 public:
 	Pipe();
 	virtual ~Pipe();
+
+	Pipe* operator>>(Pipe* sink);
 
 protected: //From wxThread
 	virtual wxThread::ExitCode Entry();
 
 public:
-	virtual wxmailto_status SetSource(Pipe* source);
-	virtual wxmailto_status SetSink(Pipe* sink);
-
+	virtual wxmailto_status StartFlow();
 	virtual void Terminate();
 	virtual void ReportPipeFailure(const wxmailto_status& status, const wxString& msg = wxEmptyString);
 

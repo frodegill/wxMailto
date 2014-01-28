@@ -11,6 +11,7 @@
 #include <wx/cmdline.h>
 #include <wx/config.h>
 #include <wx/dir.h>
+#include <wx/ffile.h>
 #include <wx/hyperlink.h>
 #include <wx/listctrl.h>
 #include <wx/protocol/http.h>

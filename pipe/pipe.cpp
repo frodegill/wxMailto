@@ -49,14 +49,27 @@ Pipe::~Pipe()
 	}
 }
 
+Pipe* Pipe::operator>>(Pipe* sink)
+{
+	{
+		wxCriticalSectionLocker locker(m_pipe_lock);
+		m_sink = sink;
+	}
+	{
+		wxCriticalSectionLocker locker(sink->m_pipe_lock);
+		sink->m_source = this;
+	}
+	return sink;
+}
+
 wxThread::ExitCode Pipe::Entry()
 {
 	//1) sleep until terminate, sink wants sink_buffer bytes or we have received source_bytes
 	//2) if not terminate and sink wants sink_buffer bytes or we have received source_bytes:
-	//3) if sink wants bytes and we have sink_buffer bytes, move sink_buffer bytes to sink
-	//4) if we have source_buffer bytes and room for sink_buffer bytes, process source_buffer bytes
-	//5) if not eof and we have room for source_buffer bytes, request source_buffer bytes
-	//6) if 3, 4 or 5 did something, goto 2
+	//3)  if sink wants bytes and we have sink_buffer bytes, move sink_buffer bytes to sink
+	//4)  if we have source_buffer bytes and room for sink_buffer bytes, process source_buffer bytes
+	//5)  if not eof and we have room for source_buffer bytes, request source_buffer bytes
+	//6)  if 3, 4 or 5 did something, goto 2
 	//7) goto 1
 
 	wxmailto_status status;
@@ -157,24 +170,27 @@ wxThread::ExitCode Pipe::Entry()
 	return (wxThread::ExitCode)0;
 }
 
-wxmailto_status Pipe::SetSource(Pipe* source)
+wxmailto_status Pipe::StartFlow()
 {
+	Pipe* current_pipe = this;
+	//Find source
+	while (true)
 	{
-		wxCriticalSectionLocker locker(m_pipe_lock);
-
-		m_source = source;
-		return ID_OK;
+		wxCriticalSectionLocker locker(current_pipe->m_pipe_lock);
+		if (!current_pipe->m_source)
+			break;
+		
+		current_pipe = current_pipe->m_source;
 	}
-}
 
-wxmailto_status Pipe::SetSink(Pipe* sink)
-{
+	//Start all pipes, from source to sink
+	while (current_pipe)
 	{
-		wxCriticalSectionLocker locker(m_pipe_lock);
-
-		m_sink = sink;
-		return ID_OK;
+		wxCriticalSectionLocker locker(current_pipe->m_pipe_lock);
+		current_pipe->Run();
+		current_pipe = current_pipe->m_sink;
 	}
+	return ID_OK;
 }
 
 void Pipe::Terminate()

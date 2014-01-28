@@ -27,6 +27,7 @@ public:
 	static wxBool IsWSP(const wxChar c);
 
 	static wxmailto_status ByteArrayToHexString(const wxUint8* source_bytes, wxSizeT source_length, wxString& destination);
+	static wxmailto_status HexStringToByteArrayAllocates(const wxString& source, wxUint8*& destination_bytes, wxSizeT& destination_length);
 };
 
 }

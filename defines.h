@@ -31,7 +31,7 @@ typedef wxUint32	wxMessageId;
 
 #ifndef MIN_FUNC
 #define MIN_FUNC
-static inline wxInt MIN(wxInt a, wxInt b) {return a>b ? a : b;}
+static inline wxInt SMIN(wxInt a, wxInt b) {return a>b ? a : b;}
 #endif
 #ifndef UMIN_FUNC
 #define UMIN_FUNC
@@ -44,7 +44,7 @@ static inline wxDouble DMIN(wxDouble a, wxDouble b) {return a<b ? a : b;}
 
 #ifndef MAX_FUNC
 #define MAX_FUNC
-static inline wxInt MAX(wxInt a, wxInt b) {return a<b ? a : b;}
+static inline wxInt SMAX(wxInt a, wxInt b) {return a<b ? a : b;}
 #endif
 #ifndef UMAX_FUNC
 #define UMAX_FUNC

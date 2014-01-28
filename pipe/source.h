@@ -8,6 +8,7 @@
   #pragma interface "source.h"
 #endif
 
+#include "../gui/wxmailto_app.h"
 #include "pipe.h"
 
 
@@ -20,8 +21,12 @@ public:
 	Source();
 	virtual ~Source();
 
-public:
-	virtual wxmailto_status SetSource(Pipe* source);
+protected: //From Pipe
+	virtual wxThread::ExitCode Entry();
+
+protected:
+	virtual wxmailto_status ProvideBytes(wxUint8* buffer,
+	                                     wxSizeT& buffer_len) = 0; //IN: capacity. OUT: bytes written
 };
 
 }

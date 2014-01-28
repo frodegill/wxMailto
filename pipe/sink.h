@@ -8,6 +8,7 @@
   #pragma interface "sink.h"
 #endif
 
+#include "../gui/wxmailto_app.h"
 #include "pipe.h"
 
 
@@ -20,8 +21,12 @@ public:
 	Sink();
 	virtual ~Sink();
 
-public:
-	virtual wxmailto_status SetSink(Pipe* sink);
+protected: //From Pipe
+	virtual wxThread::ExitCode Entry();
+
+protected:
+	virtual wxmailto_status HandleBytes(wxUint8* buffer,
+	                                     wxSizeT& buffer_len) = 0; //IN: capacity. OUT: bytes handled
 };
 
 }
