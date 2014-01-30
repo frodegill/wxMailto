@@ -17,7 +17,7 @@ namespace wxMailto
 class FileSink : public Sink
 {
 public:
-	FileSink(const wxString& filename);
+	FileSink(SinkResult* sink_result, const wxString& filename);
 	virtual ~FileSink();
 
 protected: //From Sink

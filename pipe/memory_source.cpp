@@ -16,12 +16,12 @@
 
 using namespace wxMailto;
 
-MemorySource::MemorySource(const wxUint8* buffer, const wxSizeT& buffer_length)
+MemorySource::MemorySource(const wxUint8* buffer, const wxSizeT& buffer_length, wxBool owns_buffer)
 : Source(),
   m_buffer(buffer),
   m_buffer_length(buffer_length),
   m_buffer_pos(0),
-  m_owns_buffer(true)
+  m_owns_buffer(owns_buffer)
 {
 }
 

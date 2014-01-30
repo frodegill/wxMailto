@@ -25,7 +25,10 @@ public:
 	Pipe();
 	virtual ~Pipe();
 
-	Pipe* operator>>(Pipe* sink);
+	wxmailto_status InitializeSourceBuffer(const wxSizeT& initial_size=8*1024, const wxSizeT& max_size=0);
+	wxmailto_status InitializeSinkBuffer(const wxSizeT& initial_size=8*1024, const wxSizeT& max_size=0);
+
+	Pipe* ConnectTo(Pipe* sink);
 
 protected: //From wxThread
 	virtual wxThread::ExitCode Entry();
@@ -50,6 +53,10 @@ protected:
 	                             wxSizeT& buffer_length); //IN: capacity. OUT: bytes written
 
 private:
+	wxmailto_status GrowSourceBuffer();
+	wxmailto_status GrowSinkBuffer();
+
+private:
 	wxMutex m_signal_lock;
 	wxCondition* m_signal_condition;
 		
@@ -63,12 +70,14 @@ private:
 	wxUint8* m_source_buffer;
 	wxSizeT m_source_buffer_len;
 	wxSizeT m_source_buffer_pos;
+	wxSizeT m_max_source_buffer_len;
 
 	Pipe* m_sink;
 	wxCriticalSection m_sink_buffer_lock;
 	wxUint8* m_sink_buffer;
 	wxSizeT m_sink_buffer_len;
 	wxSizeT m_sink_buffer_pos;
+	wxSizeT m_max_sink_buffer_len;
 };
 
 }

@@ -15,10 +15,29 @@
 namespace wxMailto
 {
 
+class SinkResult {
+
+public:
+	SinkResult();
+	~SinkResult();
+
+	wxmailto_status Wait();
+
+	void SetStatus(const wxmailto_status& status) {m_status=status;}
+	void Signal();
+
+private:
+	wxMutex m_signal_lock;
+	wxCondition* m_signal_condition;
+	wxmailto_status m_status;
+	wxUInt m_should_terminate:1;
+};
+
+
 class Sink : public Pipe
 {
 public:
-	Sink();
+	Sink(SinkResult* sink_result);
 	virtual ~Sink();
 
 protected: //From Pipe
@@ -27,6 +46,9 @@ protected: //From Pipe
 protected:
 	virtual wxmailto_status HandleBytes(wxUint8* buffer,
 	                                     wxSizeT& buffer_len) = 0; //IN: capacity. OUT: bytes handled
+
+private:
+	SinkResult* m_sink_result;
 };
 
 }

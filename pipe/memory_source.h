@@ -17,10 +17,10 @@ namespace wxMailto
 class MemorySource : public Source
 {
 public:
-	MemorySource(const wxUint8* buffer, const wxSizeT& buffer_length);
+	MemorySource(const wxUint8* buffer, const wxSizeT& buffer_length, wxBool owns_buffer=true);
 	virtual ~MemorySource();
 
-	void SetOwnsBuffer(wxBool owns_buffer=true) {m_owns_buffer = owns_buffer;}
+	void SetOwnsBuffer(wxBool owns_buffer) {m_owns_buffer = owns_buffer;}
 
 protected: //From Source
 	virtual wxmailto_status ProvideBytes(wxUint8* buffer,

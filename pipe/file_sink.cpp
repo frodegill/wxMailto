@@ -17,8 +17,8 @@
 
 using namespace wxMailto;
 
-FileSink::FileSink(const wxString& filename)
-: Sink(),
+FileSink::FileSink(SinkResult* sink_result, const wxString& filename)
+: Sink(sink_result),
   m_file(NULL)
 {
 	m_file = new wxFFile(filename, "wb");

@@ -49,7 +49,45 @@ Pipe::~Pipe()
 	}
 }
 
-Pipe* Pipe::operator>>(Pipe* sink)
+wxmailto_status Pipe::InitializeSourceBuffer(const wxSizeT& initial_size, const wxSizeT& max_size)
+{
+	{
+		wxCriticalSectionLocker locker(m_source_buffer_lock);
+
+		if (m_source_buffer)
+			return LOGERROR(ID_SHOULDNT_GET_HERE);
+
+		m_source_buffer = new wxUint8[initial_size];
+		if (!m_source_buffer)
+			return LOGERROR(ID_OUT_OF_MEMORY);
+
+		m_source_buffer_len = initial_size;
+		m_source_buffer_pos = 0;
+		m_max_source_buffer_len = max_size ? max_size : initial_size;
+	}
+	return ID_OK;
+}
+
+wxmailto_status Pipe::InitializeSinkBuffer(const wxSizeT& initial_size, const wxSizeT& max_size)
+{
+	{
+		wxCriticalSectionLocker locker(m_sink_buffer_lock);
+
+		if (m_sink_buffer)
+			return LOGERROR(ID_SHOULDNT_GET_HERE);
+
+		m_sink_buffer = new wxUint8[initial_size];
+		if (!m_sink_buffer)
+			return LOGERROR(ID_OUT_OF_MEMORY);
+
+		m_sink_buffer_len = initial_size;
+		m_sink_buffer_pos = 0;
+		m_max_sink_buffer_len = max_size ? max_size : initial_size;
+	}
+	return ID_OK;
+}
+
+Pipe* Pipe::ConnectTo(Pipe* sink)
 {
 	{
 		wxCriticalSectionLocker locker(m_pipe_lock);
@@ -132,6 +170,13 @@ wxThread::ExitCode Pipe::Entry()
 			wxSizeT sink_buffer_length;
 			while (0 < source_buffer_length)
 			{
+				if (0.95 < (static_cast<double>(m_sink_buffer_pos+source_buffer_length) / static_cast<double>(m_sink_buffer_len)))
+				{
+					wxmailto_status status = GrowSinkBuffer();
+					if (ID_OK != status)
+						return (wxThread::ExitCode)status;
+				}
+
 				sink_buffer_length = m_sink_buffer_len-m_sink_buffer_pos;
 
 				if (ID_OK != (status=Process(m_source_buffer, source_buffer_length,
@@ -239,7 +284,7 @@ wxBool Pipe::Eof()
 			return false;
 	}
 
-	return m_source->Eof();
+	return m_source ? m_source->Eof() : false;
 }
 
 //Notify that this sink_buffer can receive requested_bytes more bytes. Should only be called by m_sink
@@ -282,6 +327,13 @@ wxmailto_status Pipe::ReceiveBytes(wxUint8* buffer, wxSizeT& buffer_length)
 	{
 		wxCriticalSectionLocker locker(m_source_buffer_lock);
 
+		if (0.95 < (static_cast<double>(m_source_buffer_pos+buffer_length) / static_cast<double>(m_source_buffer_len)))
+		{
+			wxmailto_status status = GrowSourceBuffer();
+			if (ID_OK != status)
+				return status;
+		}
+
 		wxSizeT move_length = UMIN(buffer_length, m_source_buffer_len-m_source_buffer_pos);
 		if (0 == move_length)
 			return ID_OK;
@@ -298,5 +350,47 @@ wxmailto_status Pipe::ReceiveBytes(wxUint8* buffer, wxSizeT& buffer_length)
 	}
 	
 	m_signal_condition->Signal();
+	return ID_OK;
+}
+
+wxmailto_status Pipe::GrowSourceBuffer()
+{
+	{
+		wxCriticalSectionLocker locker(m_source_buffer_lock);
+		
+		wxSizeT new_buffer_size = UMIN(2*m_source_buffer_len, m_max_source_buffer_len);
+		if (new_buffer_size <= m_source_buffer_len)
+			return ID_OK;
+		
+		wxUint8* new_buffer = new wxUint8[new_buffer_size];
+		if (!new_buffer)
+			return LOGERROR(ID_OUT_OF_MEMORY);
+
+		memcpy(new_buffer, m_source_buffer, m_source_buffer_pos);
+		delete[] m_source_buffer;
+		m_source_buffer = new_buffer;
+		m_source_buffer_len = new_buffer_size;
+	}
+	return ID_OK;
+}
+
+wxmailto_status Pipe::GrowSinkBuffer()
+{
+	{
+		wxCriticalSectionLocker locker(m_sink_buffer_lock);
+		
+		wxSizeT new_buffer_size = UMIN(2*m_sink_buffer_len, m_max_sink_buffer_len);
+		if (new_buffer_size <= m_sink_buffer_len)
+			return ID_OK;
+		
+		wxUint8* new_buffer = new wxUint8[new_buffer_size];
+		if (!new_buffer)
+			return LOGERROR(ID_OUT_OF_MEMORY);
+
+		memcpy(new_buffer, m_sink_buffer, m_sink_buffer_pos);
+		delete[] m_sink_buffer;
+		m_sink_buffer = new_buffer;
+		m_sink_buffer_len = new_buffer_size;
+	}
 	return ID_OK;
 }

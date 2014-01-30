@@ -17,13 +17,60 @@
 
 using namespace wxMailto;
 
-Sink::Sink()
-: Pipe()
+
+SinkResult::SinkResult()
+: m_should_terminate(false)
+{
+	m_signal_lock.Lock();
+	m_signal_condition = new wxCondition(m_signal_lock);
+}
+
+SinkResult::~SinkResult()
+{
+	if (m_signal_condition)
+	{
+		Signal();
+		delete m_signal_condition;
+		m_signal_condition = NULL;
+	}
+}
+
+wxmailto_status SinkResult::Wait()
+{
+	{
+		wxMutexLocker locker(m_signal_lock);
+		if (!m_should_terminate)
+		{
+			m_signal_condition->Wait();
+		}
+	}
+	return m_status;
+}
+
+void SinkResult::Signal()
+{
+	{
+		wxMutexLocker locker(m_signal_lock);
+		m_should_terminate = true;
+		m_signal_condition->Signal();
+	}
+}
+
+
+
+Sink::Sink(SinkResult* sink_result)
+: Pipe(),
+  m_sink_result(sink_result)
 {
 }
 
 Sink::~Sink()
 {
+	if (m_sink_result)
+	{
+		m_sink_result->SetStatus(ID_OK);
+		m_sink_result->Signal();
+	}
 }
 
 wxThread::ExitCode Sink::Entry()
