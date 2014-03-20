@@ -47,6 +47,7 @@ public:
 	wxmailto_status LogError(const wxmailto_status status) const;
 	wxmailto_status LogErrorMsg(const wxmailto_status status, const wxString& msg) const;
 	wxmailto_status LogWarning(const wxmailto_status status) const;
+	wxmailto_status LogDebug(const wxString& msg) const;
 	void RequestExit();
 	bool IsExitRequested() {wxCriticalSectionLocker locker(GetGlobalLockers()->m_block_exit_lock); return m_exit_requested;}
 	void AddExitBlocker();

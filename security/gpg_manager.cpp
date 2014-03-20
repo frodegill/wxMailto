@@ -19,6 +19,11 @@
 #include "../string/stringutils.h"
 #include "gpg_manager.h"
 
+//Test
+#include <wx/wfstream.h>
+#include <wx/mstream.h>
+#include "../stream/base64_bufferedstream.h"
+
 
 using namespace wxMailto;
 
@@ -50,8 +55,64 @@ wxmailto_status GPGManager::Initialize()
 	wxGetApp().GetAppModuleManager()->RegisterModule(this);
 
 
+	//Great place for testing, this location is called early in startup...
+
+	{
+		wxFileOutputStream fos("/tmp/test.txt");
+
+		Base64OutputStream b64s(&fos, 3*1024, 4*1024);
+		if (b64s.IsOk())
+		{
+			char buf[] = {0, 1, 2, 3};
+			wxMemoryInputStream input(buf, 4);
+
+			b64s.Write(input);
+			b64s.Close();
+		}
+	}
+
+	{
+		wxFileInputStream fis("/tmp/test.txt");
+
+		Base64InputStream b64s(&fis, 4*1024, 3*1024);
+		if (b64s.IsOk())
+		{
+			wxFileOutputStream fos("/tmp/test2.txt");
+
+			b64s.Read(fos);
+			b64s.Close();
+		}
+	}
+
+#if 0
+	wxUint8* buffer = new wxUint8[100];
+	strcpy((char*)buffer, "Test!\n");
+	LOGDEBUG("gpg_manager: Created buffer\n");
+	MemorySource* source = new MemorySource(1, buffer, 6, true);
+	LOGDEBUG("gpg_manager: Created MemorySource\n");
+
+	SinkResult sink_result(2);
+	LOGDEBUG("gpg_manager: Created sink_result\n");
+	FileSink* sink = new FileSink(3, &sink_result, "/tmp/test.txt");
+	LOGDEBUG("gpg_manager: Created sink /tmp/test.txt\n");
+	source->ConnectTo(sink);
+	LOGDEBUG("gpg_manager: Connected source to sink\n");
+	
+	LOGDEBUG("gpg_manager: before flow\n");
+	sink->StartFlow();
+	LOGDEBUG("gpg_manager: flow started. Wait\n");
+	sink_result.Wait();
+	LOGDEBUG("gpg_manager: After wait\n");
+	delete sink;
+	LOGDEBUG("gpg_manager: deleted sink\n");
+	delete source;
+	LOGDEBUG("gpg_manager: deleted source\n");
+#endif
+	
+#if 0
 	GPGKey key;
 	GetDefaultKey(key);
+#endif
 
 	return ID_OK;
 }

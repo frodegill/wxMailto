@@ -157,6 +157,17 @@ wxmailto_status wxMailto_App::LogWarning(const wxmailto_status status) const
 	return status;
 }
 
+wxmailto_status wxMailto_App::LogDebug(const wxString& msg) const
+{
+	{
+		wxCriticalSectionLocker locker(GetGlobalLockers()->m_log_lock);
+
+		fprintf(stderr, "%s", msg.ToUTF8().data());
+		fflush(stderr);
+	}
+	return ID_OK;
+}
+
 void wxMailto_App::RequestExit()
 {
 	{

@@ -17,7 +17,7 @@ namespace wxMailto
 class MemorySource : public Source
 {
 public:
-	MemorySource(const wxUint8* buffer, const wxSizeT& buffer_length, wxBool owns_buffer=true);
+	MemorySource(wxInt id, const wxUint8* buffer, const wxSizeT& buffer_length, wxBool owns_buffer=true);
 	virtual ~MemorySource();
 
 	void SetOwnsBuffer(wxBool owns_buffer) {m_owns_buffer = owns_buffer;}

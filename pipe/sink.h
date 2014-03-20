@@ -18,7 +18,7 @@ namespace wxMailto
 class SinkResult {
 
 public:
-	SinkResult();
+	SinkResult(wxInt id);
 	~SinkResult();
 
 	wxmailto_status Wait();
@@ -27,6 +27,8 @@ public:
 	void Signal();
 
 private:
+	wxInt m_id;
+
 	wxMutex m_signal_lock;
 	wxCondition* m_signal_condition;
 	wxmailto_status m_status;
@@ -37,7 +39,7 @@ private:
 class Sink : public Pipe
 {
 public:
-	Sink(SinkResult* sink_result);
+	Sink(wxInt id, SinkResult* sink_result);
 	virtual ~Sink();
 
 protected: //From Pipe

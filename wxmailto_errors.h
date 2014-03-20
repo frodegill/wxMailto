@@ -17,13 +17,15 @@ namespace wxMailto
 
 #ifdef __WXDEBUG__
 # define LOGERROR(x) (wxGetApp().LogError(x))
-# define LOGWARNING(x) (wxGetApp().LogWarning(x))
 # define LOGERROR_MSG(x,y) (wxGetApp().LogErrorMsg(x,(y)))
+# define LOGWARNING(x) (wxGetApp().LogWarning(x))
+# define LOGDEBUG(x) (wxGetApp().LogDebug(x))
 # define INCLUDE_LOG1 "../gui/wxmailto_app.h"	
 #else
 # define LOGERROR(x) (x)
-# define LOGWARNING(x) (x)
 # define LOGERROR_MSG(x,y) (x)
+# define LOGWARNING(x) (x)
+# define LOGDEBUG(x) (x)
 # define INCLUDE_LOG1 "../wxmailto_errors.h" 
 #endif
 

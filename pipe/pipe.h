@@ -22,7 +22,7 @@ friend class Source;
 friend class Sink;
 
 public:
-	Pipe();
+	Pipe(wxInt id);
 	virtual ~Pipe();
 
 	wxmailto_status InitializeSourceBuffer(const wxSizeT& initial_size=8*1024, const wxSizeT& max_size=0);
@@ -55,6 +55,9 @@ protected:
 private:
 	wxmailto_status GrowSourceBuffer();
 	wxmailto_status GrowSinkBuffer();
+
+protected:
+	wxInt m_id;
 
 private:
 	wxMutex m_signal_lock;

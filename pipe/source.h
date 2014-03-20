@@ -18,7 +18,7 @@ namespace wxMailto
 class Source : public Pipe
 {
 public:
-	Source();
+	Source(wxInt id);
 	virtual ~Source();
 
 protected: //From Pipe
