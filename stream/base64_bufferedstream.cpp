@@ -17,8 +17,9 @@
 using namespace wxMailto;
 
 
-Base64InputStream::Base64InputStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length)
-: BufferedInputStream(stream, max_underflow_buffer_length, max_overflow_buffer_length)
+Base64InputStream::Base64InputStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length, wxBase64DecodeMode mode)
+: BufferedInputStream(stream, max_underflow_buffer_length, max_overflow_buffer_length),
+  m_mode(mode)
 {
 }
 
@@ -33,7 +34,7 @@ void Base64InputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT&
 	wxSizeT aligned_src_length = eof ? src_length : (src_length - src_length%4);
 	wxSizeT max_encoded_length = UMIN(aligned_src_length, wxBase64EncodedSize(dst_length));
 	
-	written_bytes = wxBase64Decode(dst, dst_length, reinterpret_cast<const char*>(src), max_encoded_length, wxBase64DecodeMode_SkipWS);
+	written_bytes = wxBase64Decode(dst, dst_length, reinterpret_cast<const char*>(src), max_encoded_length, m_mode);
 	read_bytes = max_encoded_length;
 }
 
