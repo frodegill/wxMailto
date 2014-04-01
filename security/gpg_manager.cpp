@@ -23,6 +23,7 @@
 #include <wx/wfstream.h>
 #include <wx/mstream.h>
 #include "../stream/base64_bufferedstream.h"
+#include "../stream/qp_bufferedstream.h"
 
 
 using namespace wxMailto;
@@ -58,7 +59,7 @@ wxmailto_status GPGManager::Initialize()
 	//Great place for testing, this location is called early in startup...
 
 	{
-		wxFileOutputStream fos("/tmp/test.txt");
+		wxFileOutputStream fos("/tmp/base64-test.txt");
 
 		Base64OutputStream b64s(&fos, 3*1024, 4*1024);
 		if (b64s.IsOk())
@@ -72,18 +73,47 @@ wxmailto_status GPGManager::Initialize()
 	}
 
 	{
-		wxFileInputStream fis("/tmp/test.txt");
+		wxFileInputStream fis("/tmp/base64-test.txt");
 
 		Base64InputStream b64s(&fis, 4*1024, 3*1024);
 		if (b64s.IsOk())
 		{
-			wxFileOutputStream fos("/tmp/test2.txt");
+			wxFileOutputStream fos("/tmp/base64-test2.txt");
 
 			b64s.Read(fos);
 			b64s.Close();
 		}
 	}
 
+	{
+		wxFileOutputStream fos("/tmp/qp-test.txt");
+
+		QPOutputStream qps(&fos, 1*1024, 1*1024);
+		if (qps.IsOk())
+		{
+			const char* buf = "Now's the time =\r\n"
+                        "for all folk to come=\r\n"
+                        " to the aid of their country.";
+			wxMemoryInputStream input(buf, strlen(buf));
+
+			qps.Write(input);
+			qps.Close();
+		}
+	}
+
+	{
+		wxFileInputStream fis("/tmp/qp-test.txt");
+
+		QPInputStream qps(&fis, 1*1024, 1*1024);
+		if (qps.IsOk())
+		{
+			wxFileOutputStream fos("/tmp/qp-test2.txt");
+
+			qps.Read(fos);
+			qps.Close();
+		}
+	}
+      
 #if 0
 	wxUint8* buffer = new wxUint8[100];
 	strcpy((char*)buffer, "Test!\n");

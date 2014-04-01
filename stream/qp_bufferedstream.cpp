@@ -125,7 +125,7 @@ QPOutputStream::QPOutputStream(wxOutputStream* stream, wxSizeT max_underflow_buf
 
 void QPOutputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
                                  wxUint8* dst, wxSizeT dst_length, wxSizeT& written_bytes,
-                                 wxBool eof)
+                                 wxBool WXUNUSED(eof))
 {
 	read_bytes = written_bytes = 0;
 	if (!src || 0==src_length || !dst || 0==dst_length)
@@ -165,16 +165,12 @@ void QPOutputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& re
 			dst[written_bytes++] = '=';
 			dst[written_bytes++] = TO_HEX[(c&0xF0)>>4];
 			dst[written_bytes++] = TO_HEX[c&0x0F];
+			read_bytes++;
 		}
 		else
 		{
 			dst[written_bytes++] = c;
+			read_bytes++;
 		}
 	}
-	
-	wxSizeT aligned_src_length = eof ? src_length : (src_length - src_length%3);
-	wxSizeT max_decoded_length = UMIN(aligned_src_length, wxBase64DecodedSize(dst_length));
-	
-	written_bytes = wxBase64Encode(reinterpret_cast<char*>(dst), dst_length, src, max_decoded_length);
-	read_bytes = max_decoded_length;
 }
