@@ -11,6 +11,7 @@ all:    $(PROGRAM)
 PCH = pch.h
 WXWIDGETS_VERSION = 3.0
 DEBUG_INFO = YES
+RUN_TESTS = YES
 SOURCES = $(shell find . -name '*.cpp')
 OBJECTS = $(SOURCES:.cpp=.o)
 DEPS = $(OBJECTS:.o=.dep)
@@ -31,6 +32,10 @@ ifdef DEBUG_INFO
 else
  CPPFLAGS += -O
  LIBSFLAGS += -lPocoODBC -lPocoMySQL -lPocoData -lPocoFoundation
+endif
+
+ifdef RUN_TESTS
+ CPPFLAGS += -DRUN_TESTS
 endif
 
 ifdef PCH
