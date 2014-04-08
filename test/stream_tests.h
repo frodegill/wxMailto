@@ -21,8 +21,13 @@ class StreamTests
 public:
 	StreamTests();
 
-public:
 	wxmailto_status RunTests();
+
+private:
+	wxmailto_status Bas64EncodeTest();
+	wxmailto_status Bas64DecodeTest();
+	wxmailto_status QPEncodeTest();
+	wxmailto_status QPDecodeTest();
 };
 
 #endif //RUN_TESTS

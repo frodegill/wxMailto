@@ -42,6 +42,8 @@ enum wxmailto_status
 	ID_EXIT_REQUESTED,
 	ID_SHOULDNT_GET_HERE,
 
+	ID_TEST_FAILED,
+
 	//Contacts
 #if 0
 	ID_CONTACT_GROUP_WITHOUT_NAME,

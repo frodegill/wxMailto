@@ -13,8 +13,12 @@
 
 #include "stream_tests.h"
 
-#include <wx/wfstream.h>
 #include <wx/mstream.h>
+#include <wx/sstream.h>
+#include <wx/wfstream.h>
+
+#include "../gui/app_module_manager.h"
+#include "../gui/wxmailto_app.h"
 #include "../stream/base64_bufferedstream.h"
 #include "../stream/qp_bufferedstream.h"
 
@@ -29,10 +33,27 @@ StreamTests::StreamTests()
 
 wxmailto_status StreamTests::RunTests()
 {
+	wxmailto_status status;
+	
+	if (ID_OK!=(status=Bas64EncodeTest()) ||
+	    ID_OK!=(status=Bas64DecodeTest()) ||
+	    ID_OK!=(status=QPEncodeTest()) ||
+	    ID_OK!=(status=QPDecodeTest()))
 	{
-		wxFileOutputStream fos("/tmp/base64-test.txt");
+		return status;
+	}
 
-		Base64OutputStream b64s(&fos, 3*1024, 4*1024);
+	return ID_OK;
+}
+
+wxmailto_status StreamTests::Bas64EncodeTest()
+{
+	wxmailto_status status = ID_OK;
+
+	{
+		wxStringOutputStream os;
+
+		Base64OutputStream b64s(&os, 3*1024, 4*1024);
 		if (b64s.IsOk())
 		{
 			char buf[] = {0, 1, 2, 3};
@@ -41,8 +62,17 @@ wxmailto_status StreamTests::RunTests()
 			b64s.Write(input);
 			b64s.Close();
 		}
-	}
 
+		if (!os.GetString().IsSameAs("AAECAw=="))
+		{
+			status = LOGERROR(ID_TEST_FAILED);
+		}
+	}
+	return status;
+}
+
+wxmailto_status StreamTests::Bas64DecodeTest()
+{
 	{
 		wxFileInputStream fis("/tmp/base64-test.txt");
 
@@ -55,11 +85,17 @@ wxmailto_status StreamTests::RunTests()
 			b64s.Close();
 		}
 	}
+	return ID_OK;
+}
+
+wxmailto_status StreamTests::QPEncodeTest()
+{
+	wxmailto_status status = ID_OK;
 
 	{
-		wxFileOutputStream fos("/tmp/qp-test.txt");
+		wxStringOutputStream os;
 
-		QPOutputStream qps(&fos, 1*1024, 1*1024);
+		QPOutputStream qps(&os, 1*1024, 1*1024);
 		if (qps.IsOk())
 		{
 			const char* buf = "Now's the time =\r\n"
@@ -70,8 +106,18 @@ wxmailto_status StreamTests::RunTests()
 			qps.Write(input);
 			qps.Close();
 		}
-	}
 
+		wxString s = os.GetString();
+		if (!os.GetString().IsSameAs(""))
+		{
+			status = LOGERROR(ID_TEST_FAILED);
+		}
+	}
+	return status;
+}
+
+wxmailto_status StreamTests::QPDecodeTest()
+{
 	{
 		wxFileInputStream fis("/tmp/qp-test.txt");
 
@@ -84,7 +130,6 @@ wxmailto_status StreamTests::RunTests()
 			qps.Close();
 		}
 	}
-
 	return ID_OK;
 }
 
