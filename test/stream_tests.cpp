@@ -20,6 +20,7 @@
 #include "../gui/app_module_manager.h"
 #include "../gui/wxmailto_app.h"
 #include "../stream/base64_bufferedstream.h"
+#include "../stream/hex_bufferedstream.h"
 #include "../stream/qp_bufferedstream.h"
 
 
@@ -35,7 +36,9 @@ wxmailto_status StreamTests::RunTests()
 {
 	wxmailto_status status;
 	
-	if (ID_OK!=(status=Bas64EncodeTest()) ||
+	if (ID_OK!=(status=HexEncodeTest()) ||
+	    ID_OK!=(status=HexDecodeTest()) ||
+	    ID_OK!=(status=Bas64EncodeTest()) ||
 	    ID_OK!=(status=Bas64DecodeTest()) ||
 	    ID_OK!=(status=QPEncodeTest()) ||
 	    ID_OK!=(status=QPDecodeTest()))
@@ -43,6 +46,48 @@ wxmailto_status StreamTests::RunTests()
 		return status;
 	}
 
+	return ID_OK;
+}
+
+wxmailto_status StreamTests::HexEncodeTest()
+{
+	wxmailto_status status = ID_OK;
+
+	{
+		wxStringOutputStream os;
+
+		HexOutputStream hos(&os, 1*1024, 1*1024);
+		if (hos.IsOk())
+		{
+			wxUint8 buf[] = {0x00, 0x09, 0x0A, 0x7F, 0x80, 0xFF};
+			wxMemoryInputStream input(buf, 6);
+
+			hos.Write(input);
+			hos.Close();
+		}
+
+		if (!os.GetString().IsSameAs("00090A7F80FF"))
+		{
+			status = LOGERROR(ID_TEST_FAILED);
+		}
+	}
+	return status;
+}
+
+wxmailto_status StreamTests::HexDecodeTest()
+{
+	{
+		wxFileInputStream fis("/tmp/hex-test.txt");
+
+		Base64InputStream his(&fis, 1*1024, 1*1024);
+		if (his.IsOk())
+		{
+			wxFileOutputStream fos("/tmp/hex-test2.txt");
+
+			his.Read(fos);
+			his.Close();
+		}
+	}
 	return ID_OK;
 }
 

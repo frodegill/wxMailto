@@ -24,6 +24,8 @@ public:
 	wxmailto_status RunTests();
 
 private:
+	wxmailto_status HexEncodeTest();
+	wxmailto_status HexDecodeTest();
 	wxmailto_status Bas64EncodeTest();
 	wxmailto_status Bas64DecodeTest();
 	wxmailto_status QPEncodeTest();
