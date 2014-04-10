@@ -19,14 +19,14 @@
 using namespace wxMailto;
 
 
-QPInputStream::QPInputStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length)
+QPDecodeStream::QPDecodeStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length)
 : BufferedInputStream(stream, max_underflow_buffer_length, max_overflow_buffer_length)
 {
 }
 
-void QPInputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
-                                wxUint8* dst, wxSizeT dst_length, wxSizeT& written_bytes,
-                                wxBool eof)
+void QPDecodeStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
+                             wxUint8* dst, wxSizeT dst_length, wxSizeT& written_bytes,
+                             wxBool eof)
 {
 	read_bytes = written_bytes = 0;
 	if (!src || 0==src_length || !dst || 0==dst_length)
@@ -96,7 +96,7 @@ void QPInputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& rea
 
 
 
-QPOutputStream::QPOutputStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length,
+QPEncodeStream::QPEncodeStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length,
                                wxUint32 mode, wxSizeT wrap_col, wxSizeT current_col)
 : BufferedOutputStream(stream, max_underflow_buffer_length, max_overflow_buffer_length),
   m_mode(mode),
@@ -105,9 +105,9 @@ QPOutputStream::QPOutputStream(wxOutputStream* stream, wxSizeT max_underflow_buf
 {
 }
 
-void QPOutputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
-                                 wxUint8* dst, wxSizeT dst_length, wxSizeT& written_bytes,
-                                 wxBool WXUNUSED(eof))
+void QPEncodeStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
+                             wxUint8* dst, wxSizeT dst_length, wxSizeT& written_bytes,
+                             wxBool WXUNUSED(eof))
 {
 	read_bytes = written_bytes = 0;
 	if (!src || 0==src_length || !dst || 0==dst_length)

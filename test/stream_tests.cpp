@@ -51,41 +51,48 @@ wxmailto_status StreamTests::RunTests()
 
 wxmailto_status StreamTests::HexEncodeTest()
 {
-	wxmailto_status status = ID_OK;
-
 	{
 		wxStringOutputStream os;
 
-		HexOutputStream hos(&os, 1*1024, 1*1024);
-		if (hos.IsOk())
+		HexEncodeStream hos(&os, 1*1024, 1*1024);
+		if (!hos.IsOk())
+			return LOGERROR(ID_TEST_FAILED);
+
 		{
 			wxUint8 buf[] = {0x00, 0x09, 0x0A, 0x7F, 0x80, 0xFF};
-			wxMemoryInputStream input(buf, 6);
+			wxMemoryInputStream is(buf, 6);
 
-			hos.Write(input);
+			hos.Write(is);
 			hos.Close();
 		}
 
 		if (!os.GetString().IsSameAs("00090A7F80FF"))
-		{
-			status = LOGERROR(ID_TEST_FAILED);
-		}
+			return LOGERROR(ID_TEST_FAILED);
 	}
-	return status;
+	return ID_OK;
 }
 
 wxmailto_status StreamTests::HexDecodeTest()
 {
 	{
-		wxFileInputStream fis("/tmp/hex-test.txt");
+		wxStringInputStream is("00090A7F80FF");
 
-		Base64InputStream his(&fis, 1*1024, 1*1024);
-		if (his.IsOk())
+		HexDecodeStream his(&is, 1*1024, 1*1024);
+		if (!his.IsOk())
+			return LOGERROR(ID_TEST_FAILED);
+
+		wxUint8 buf[100];
 		{
-			wxFileOutputStream fos("/tmp/hex-test2.txt");
+			wxMemoryOutputStream os(&buf, 100);
 
-			his.Read(fos);
+			his.Read(os);
 			his.Close();
+		}
+		
+		if (0x00!=buf[0] || 0x09!=buf[1] || 0x0A!=buf[2] ||
+		    0x7F!=buf[3] || 0x80!=buf[4] || 0xFF!=buf[5])
+		{
+			return LOGERROR(ID_TEST_FAILED);
 		}
 	}
 	return ID_OK;
@@ -98,7 +105,7 @@ wxmailto_status StreamTests::Bas64EncodeTest()
 	{
 		wxStringOutputStream os;
 
-		Base64OutputStream b64s(&os, 3*1024, 4*1024);
+		Base64EncodeStream b64s(&os, 3*1024, 4*1024);
 		if (b64s.IsOk())
 		{
 			char buf[] = {0, 1, 2, 3};
@@ -121,7 +128,7 @@ wxmailto_status StreamTests::Bas64DecodeTest()
 	{
 		wxFileInputStream fis("/tmp/base64-test.txt");
 
-		Base64InputStream b64s(&fis, 4*1024, 3*1024);
+		Base64DecodeStream b64s(&fis, 4*1024, 3*1024);
 		if (b64s.IsOk())
 		{
 			wxFileOutputStream fos("/tmp/base64-test2.txt");
@@ -140,7 +147,7 @@ wxmailto_status StreamTests::QPEncodeTest()
 	{
 		wxStringOutputStream os;
 
-		QPOutputStream qps(&os, 1*1024, 1*1024);
+		QPEncodeStream qps(&os, 1*1024, 1*1024);
 		if (qps.IsOk())
 		{
 			const char* buf = "Now's the time =\r\n"
@@ -166,7 +173,7 @@ wxmailto_status StreamTests::QPDecodeTest()
 	{
 		wxFileInputStream fis("/tmp/qp-test.txt");
 
-		QPInputStream qps(&fis, 1*1024, 1*1024);
+		QPDecodeStream qps(&fis, 1*1024, 1*1024);
 		if (qps.IsOk())
 		{
 			wxFileOutputStream fos("/tmp/qp-test2.txt");

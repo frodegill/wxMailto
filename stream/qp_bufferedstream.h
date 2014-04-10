@@ -19,10 +19,10 @@ static const wxUint32 QP_ENCODE_WS      = 1<<1; //Encode SPACE and TAB
 static const wxUint32 QP_ENCODE_SPECIAL = 1<<2; //Encode special characters to make it EBCDIC safe
 
 
-class QPInputStream : public BufferedInputStream
+class QPDecodeStream : public BufferedInputStream
 {
 public:
-	QPInputStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length);
+	QPDecodeStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length);
 
 	//From BufferedInputStream
 public:
@@ -31,10 +31,10 @@ public:
 	                     wxBool eof);
 };
 
-class QPOutputStream : public BufferedOutputStream
+class QPEncodeStream : public BufferedOutputStream
 {
 public:
-	QPOutputStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length,
+	QPEncodeStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length,
 	               wxUint32 mode=0, wxSizeT wrap_col=0, wxSizeT current_col=0);
 
 	//From BufferedOutputStream

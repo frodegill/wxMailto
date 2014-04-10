@@ -17,10 +17,10 @@ extern const wxUint8 TO_HEX[];
 namespace wxMailto
 {
 
-class HexInputStream : public BufferedInputStream
+class HexDecodeStream : public BufferedInputStream
 {
 public:
-	HexInputStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length);
+	HexDecodeStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length);
 
 	//From BufferedInputStream
 public:
@@ -29,10 +29,10 @@ public:
 	                     wxBool eof);
 };
 
-class HexOutputStream : public BufferedOutputStream
+class HexEncodeStream : public BufferedOutputStream
 {
 public:
-	HexOutputStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length);
+	HexEncodeStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length);
 
 	//From BufferedOutputStream
 public:

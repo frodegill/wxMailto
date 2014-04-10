@@ -14,10 +14,10 @@
 namespace wxMailto
 {
 
-class Base64InputStream : public BufferedInputStream
+class Base64DecodeStream : public BufferedInputStream
 {
 public:
-	Base64InputStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length, wxBase64DecodeMode mode=wxBase64DecodeMode_SkipWS);
+	Base64DecodeStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length, wxBase64DecodeMode mode=wxBase64DecodeMode_SkipWS);
 
 	//From BufferedInputStream
 public:
@@ -28,10 +28,10 @@ private:
 	wxBase64DecodeMode m_mode;
 };
 
-class Base64OutputStream : public BufferedOutputStream
+class Base64EncodeStream : public BufferedOutputStream
 {
 public:
-	Base64OutputStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length);
+	Base64EncodeStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length);
 
 	//From BufferedOutputStream
 public:

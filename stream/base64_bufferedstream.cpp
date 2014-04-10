@@ -17,13 +17,13 @@
 using namespace wxMailto;
 
 
-Base64InputStream::Base64InputStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length, wxBase64DecodeMode mode)
+Base64DecodeStream::Base64DecodeStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length, wxBase64DecodeMode mode)
 : BufferedInputStream(stream, max_underflow_buffer_length, max_overflow_buffer_length),
   m_mode(mode)
 {
 }
 
-void Base64InputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
+void Base64DecodeStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
                                 wxUint8* dst, wxSizeT dst_length, wxSizeT& written_bytes,
                                 wxBool eof)
 {
@@ -38,12 +38,14 @@ void Base64InputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT&
 	read_bytes = max_encoded_length;
 }
 
-Base64OutputStream::Base64OutputStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length)
+
+
+Base64EncodeStream::Base64EncodeStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length)
 : BufferedOutputStream(stream, max_underflow_buffer_length, max_overflow_buffer_length)
 {
 }
 
-void Base64OutputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
+void Base64EncodeStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
                                  wxUint8* dst, wxSizeT dst_length, wxSizeT& written_bytes,
                                  wxBool eof)
 {

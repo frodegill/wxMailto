@@ -38,12 +38,12 @@ const wxUint8 TO_HEX[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
 	                          '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
 
 
-HexInputStream::HexInputStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length)
+HexDecodeStream::HexDecodeStream(wxInputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length)
 : BufferedInputStream(stream, max_underflow_buffer_length, max_overflow_buffer_length)
 {
 }
 
-void HexInputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
+void HexDecodeStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
                              wxUint8* dst, wxSizeT dst_length, wxSizeT& written_bytes,
                              wxBool eof)
 {
@@ -75,12 +75,12 @@ void HexInputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& re
 }
 
 
-HexOutputStream::HexOutputStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length)
+HexEncodeStream::HexEncodeStream(wxOutputStream* stream, wxSizeT max_underflow_buffer_length, wxSizeT max_overflow_buffer_length)
 : BufferedOutputStream(stream, max_underflow_buffer_length, max_overflow_buffer_length)
 {
 }
 
-void HexOutputStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
+void HexEncodeStream::Process(const wxUint8* src, wxSizeT src_length, wxSizeT& read_bytes,
                               wxUint8* dst, wxSizeT dst_length, wxSizeT& written_bytes,
                               wxBool WXUNUSED(eof))
 {
