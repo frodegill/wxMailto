@@ -41,7 +41,8 @@ wxmailto_status StreamTests::RunTests()
 	    ID_OK!=(status=Bas64EncodeTest()) ||
 	    ID_OK!=(status=Bas64DecodeTest()) ||
 	    ID_OK!=(status=QPEncodeTest()) ||
-	    ID_OK!=(status=QPDecodeTest()))
+	    ID_OK!=(status=QPDecodeTest()) ||
+	    ID_OK!=(status=MimeLinewrappedTest()))
 	{
 		return status;
 	}
@@ -89,10 +90,12 @@ wxmailto_status StreamTests::HexDecodeTest()
 			his.Close();
 		}
 		
-		if (0x00!=buf[0] || 0x09!=buf[1] || 0x0A!=buf[2] ||
-		    0x7F!=buf[3] || 0x80!=buf[4] || 0xFF!=buf[5])
+		wxUint8 expected[] = {0x00, 0x09, 0x0A, 0x7F, 0x80, 0xFF};
+		wxSizeT i;
+		for (i=0; sizeof(expected)/sizeof(expected[0]) > i; i++)
 		{
-			return LOGERROR(ID_TEST_FAILED);
+			if (buf[i] != expected[i])
+				return LOGERROR(ID_TEST_FAILED);
 		}
 	}
 	return ID_OK;
@@ -100,13 +103,13 @@ wxmailto_status StreamTests::HexDecodeTest()
 
 wxmailto_status StreamTests::Bas64EncodeTest()
 {
-	wxmailto_status status = ID_OK;
-
 	{
 		wxStringOutputStream os;
 
 		Base64EncodeStream b64s(&os, 3*1024, 4*1024);
-		if (b64s.IsOk())
+		if (!b64s.IsOk())
+			return LOGERROR(ID_TEST_FAILED);
+		
 		{
 			char buf[] = {0, 1, 2, 3};
 			wxMemoryInputStream input(buf, 4);
@@ -116,25 +119,34 @@ wxmailto_status StreamTests::Bas64EncodeTest()
 		}
 
 		if (!os.GetString().IsSameAs("AAECAw=="))
-		{
-			status = LOGERROR(ID_TEST_FAILED);
-		}
+			return LOGERROR(ID_TEST_FAILED);
 	}
-	return status;
+	return ID_OK;
 }
 
 wxmailto_status StreamTests::Bas64DecodeTest()
 {
 	{
-		wxFileInputStream fis("/tmp/base64-test.txt");
+		wxStringInputStream is("AAECAw==");
 
-		Base64DecodeStream b64s(&fis, 4*1024, 3*1024);
-		if (b64s.IsOk())
+		Base64DecodeStream b64s(&is, 4*1024, 3*1024);
+		if (!b64s.IsOk())
+			return LOGERROR(ID_TEST_FAILED);
+
+		wxUint8 buf[100];
 		{
-			wxFileOutputStream fos("/tmp/base64-test2.txt");
+			wxMemoryOutputStream os(&buf, 100);
 
-			b64s.Read(fos);
+			b64s.Read(os);
 			b64s.Close();
+		}
+		
+		wxUint8 expected[] = {0, 1, 2, 3};
+		wxSizeT i;
+		for (i=0; sizeof(expected)/sizeof(expected[0]) > i; i++)
+		{
+			if (buf[i] != expected[i])
+				return LOGERROR(ID_TEST_FAILED);
 		}
 	}
 	return ID_OK;
@@ -142,44 +154,81 @@ wxmailto_status StreamTests::Bas64DecodeTest()
 
 wxmailto_status StreamTests::QPEncodeTest()
 {
-	wxmailto_status status = ID_OK;
-
 	{
 		wxStringOutputStream os;
 
-		QPEncodeStream qps(&os, 1*1024, 1*1024);
-		if (qps.IsOk())
-		{
-			const char* buf = "Now's the time =\r\n"
-                        "for all folk to come=\r\n"
-                        " to the aid of their country.";
-			wxMemoryInputStream input(buf, strlen(buf));
+		QPEncodeStream qps(&os, 1*1024, 1*1024, 0);
+		if (!qps.IsOk())
+			return LOGERROR(ID_TEST_FAILED);
 
-			qps.Write(input);
+		{
+			wxStringInputStream is("=? \r\n =AD === .");
+			qps.Write(is);
 			qps.Close();
 		}
 
 		wxString s = os.GetString();
-		if (!os.GetString().IsSameAs(""))
+		if (!os.GetString().IsSameAs("=3D? \r\n =3DAD =3D=3D=3D ."))
 		{
-			status = LOGERROR(ID_TEST_FAILED);
+			return LOGERROR(ID_TEST_FAILED);
 		}
 	}
-	return status;
+	return ID_OK;
 }
 
 wxmailto_status StreamTests::QPDecodeTest()
 {
 	{
-		wxFileInputStream fis("/tmp/qp-test.txt");
+		wxStringInputStream is("Now's the time =\r\n"
+		                       "for all folk to come=\r\n"
+		                       " to the aid of their country.");
 
-		QPDecodeStream qps(&fis, 1*1024, 1*1024);
-		if (qps.IsOk())
+		QPDecodeStream qps(&is, 1*1024, 1*1024);
+		if (!qps.IsOk())
+			return LOGERROR(ID_TEST_FAILED);
+
+		wxString s;
 		{
-			wxFileOutputStream fos("/tmp/qp-test2.txt");
+			wxStringOutputStream os;
 
-			qps.Read(fos);
+			qps.Read(os);
 			qps.Close();
+			s = os.GetString();
+		}
+
+		if (!s.IsSameAs("Now's the time "
+			              "for all folk to come"
+			              " to the aid of their country."))
+		{
+			return LOGERROR(ID_TEST_FAILED);
+		}
+	}
+	return ID_OK;
+}
+
+wxmailto_status StreamTests::MimeLinewrappedTest()
+{
+	{
+		wxStringOutputStream os;
+
+		MimeLinewrappedStream mls(&os, 1*1024, 1*1024, 18, 0, QP, false);
+		if (!mls.IsOk())
+			return LOGERROR(ID_TEST_FAILED);
+
+		{
+			wxStringInputStream is("Now's the time "
+			                       "for all folk to come"
+			                       " to the aid of their country.");
+			mls.Write(is);
+			mls.Close();
+		}
+
+		wxString s = os.GetString();
+		if (!os.GetString().IsSameAs("Now's the time =\r\n"
+			                           "for all folk to come=\r\n"
+			                           " to the aid of their country."))
+		{
+			return LOGERROR(ID_TEST_FAILED);
 		}
 	}
 	return ID_OK;

@@ -30,6 +30,7 @@ private:
 	wxmailto_status Bas64DecodeTest();
 	wxmailto_status QPEncodeTest();
 	wxmailto_status QPDecodeTest();
+	wxmailto_status MimeLinewrappedTest();
 };
 
 #endif //RUN_TESTS
