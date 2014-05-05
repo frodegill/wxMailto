@@ -36,13 +36,13 @@ wxmailto_status StreamTests::RunTests()
 {
 	wxmailto_status status;
 	
-	if (ID_OK!=(status=HexEncodeTest()) ||
-	    ID_OK!=(status=HexDecodeTest()) ||
-	    ID_OK!=(status=Bas64EncodeTest()) ||
-	    ID_OK!=(status=Bas64DecodeTest()) ||
-	    ID_OK!=(status=QPEncodeTest()) ||
-	    ID_OK!=(status=QPDecodeTest()) ||
-	    ID_OK!=(status=MimeLinewrappedTest()))
+	if (ID_OK!=(status=HexEncodeTest_HappyDay()) ||
+	    ID_OK!=(status=HexDecodeTest_HappyDay()) ||
+	    ID_OK!=(status=Bas64EncodeTest_HappyDay()) ||
+	    ID_OK!=(status=Bas64DecodeTest_HappyDay()) ||
+	    ID_OK!=(status=QPEncodeTest_HappyDay()) ||
+	    ID_OK!=(status=QPDecodeTest_HappyDay()) ||
+	    ID_OK!=(status=MimeLinewrappedTest_HappyDay()))
 	{
 		return status;
 	}
@@ -50,7 +50,7 @@ wxmailto_status StreamTests::RunTests()
 	return ID_OK;
 }
 
-wxmailto_status StreamTests::HexEncodeTest()
+wxmailto_status StreamTests::HexEncodeTest_HappyDay()
 {
 	{
 		wxStringOutputStream os;
@@ -73,7 +73,7 @@ wxmailto_status StreamTests::HexEncodeTest()
 	return ID_OK;
 }
 
-wxmailto_status StreamTests::HexDecodeTest()
+wxmailto_status StreamTests::HexDecodeTest_HappyDay()
 {
 	{
 		wxStringInputStream is("00090A7F80FF");
@@ -101,7 +101,7 @@ wxmailto_status StreamTests::HexDecodeTest()
 	return ID_OK;
 }
 
-wxmailto_status StreamTests::Bas64EncodeTest()
+wxmailto_status StreamTests::Bas64EncodeTest_HappyDay()
 {
 	{
 		wxStringOutputStream os;
@@ -124,7 +124,7 @@ wxmailto_status StreamTests::Bas64EncodeTest()
 	return ID_OK;
 }
 
-wxmailto_status StreamTests::Bas64DecodeTest()
+wxmailto_status StreamTests::Bas64DecodeTest_HappyDay()
 {
 	{
 		wxStringInputStream is("AAECAw==");
@@ -152,7 +152,7 @@ wxmailto_status StreamTests::Bas64DecodeTest()
 	return ID_OK;
 }
 
-wxmailto_status StreamTests::QPEncodeTest()
+wxmailto_status StreamTests::QPEncodeTest_HappyDay()
 {
 	{
 		wxStringOutputStream os;
@@ -176,7 +176,7 @@ wxmailto_status StreamTests::QPEncodeTest()
 	return ID_OK;
 }
 
-wxmailto_status StreamTests::QPDecodeTest()
+wxmailto_status StreamTests::QPDecodeTest_HappyDay()
 {
 	{
 		wxStringInputStream is("Now's the time =\r\n"
@@ -206,12 +206,12 @@ wxmailto_status StreamTests::QPDecodeTest()
 	return ID_OK;
 }
 
-wxmailto_status StreamTests::MimeLinewrappedTest()
+wxmailto_status StreamTests::MimeLinewrappedTest_HappyDay()
 {
 	{
 		wxStringOutputStream os;
 
-		MimeLinewrappedStream mls(&os, 1*1024, 1*1024, 18, 0, QP, false);
+		MimeLinewrappedStream mls(&os, 1*1024, 1*1024, 21, 5, QP, false);
 		if (!mls.IsOk())
 			return LOGERROR(ID_TEST_FAILED);
 
@@ -226,7 +226,8 @@ wxmailto_status StreamTests::MimeLinewrappedTest()
 		wxString s = os.GetString();
 		if (!os.GetString().IsSameAs("Now's the time =\r\n"
 			                           "for all folk to come=\r\n"
-			                           " to the aid of their country."))
+			                           " to the aid of their=\r\n"
+																 " country."))
 		{
 			return LOGERROR(ID_TEST_FAILED);
 		}

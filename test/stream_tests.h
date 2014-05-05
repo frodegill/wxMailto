@@ -24,13 +24,13 @@ public:
 	wxmailto_status RunTests();
 
 private:
-	wxmailto_status HexEncodeTest();
-	wxmailto_status HexDecodeTest();
-	wxmailto_status Bas64EncodeTest();
-	wxmailto_status Bas64DecodeTest();
-	wxmailto_status QPEncodeTest();
-	wxmailto_status QPDecodeTest();
-	wxmailto_status MimeLinewrappedTest();
+	wxmailto_status HexEncodeTest_HappyDay();
+	wxmailto_status HexDecodeTest_HappyDay();
+	wxmailto_status Bas64EncodeTest_HappyDay();
+	wxmailto_status Bas64DecodeTest_HappyDay();
+	wxmailto_status QPEncodeTest_HappyDay();
+	wxmailto_status QPDecodeTest_HappyDay();
+	wxmailto_status MimeLinewrappedTest_HappyDay();
 };
 
 #endif //RUN_TESTS
