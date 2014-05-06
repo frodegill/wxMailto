@@ -16,23 +16,10 @@
 
 using namespace wxMailto;
 
-static const char g_hexstring[] = "0123456789abcdef";
-static const wxUint8 g_hexvalues[] = {16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                       0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 16, 16, 16, 16, 16, 16,
-                                      16, 10, 11, 12, 13, 14, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 10, 11, 12, 13, 14, 15, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16,
-                                      16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16};
+
+extern const wxUint8 FROM_HEX[];
+extern const wxUint8 TO_HEX[];
+
 
 wxSizeT StringUtils::Utf8ByteLength(const wxUint8 first_byte)
 {
@@ -61,11 +48,12 @@ wxmailto_status StringUtils::ByteArrayToHexString(const wxUint8* source_bytes, w
 
 	for (wxSizeT i=0; source_length>i; i++)
 	{
-		md5sum_hex[i*2] = g_hexstring[((source_bytes[i]>>4)&0x0F)];
-		md5sum_hex[i*2+1] = g_hexstring[source_bytes[i]&0x0F];
+		md5sum_hex[i*2] = TO_HEX[((source_bytes[i]>>4)&0x0F)];
+		md5sum_hex[i*2+1] = TO_HEX[source_bytes[i]&0x0F];
 	}
  
 	destination = wxString(md5sum_hex, source_length*2);
+	memset(md5sum_hex, 0, source_length*2);
 	delete[] md5sum_hex;
 	return ID_OK;
 }
@@ -87,10 +75,11 @@ wxmailto_status StringUtils::HexStringToByteArrayAllocates(const wxString& sourc
 	wxUint8 msb, lsb;
 	for (wxSizeT i=0; source_length>i; i++)
 	{
-		msb = g_hexvalues[*source_bytes++];
-		lsb = g_hexvalues[*source_bytes++];
+		msb = FROM_HEX[*source_bytes++];
+		lsb = FROM_HEX[*source_bytes++];
 		if (16<=msb || 16<=lsb)
 		{
+			memset(destination_bytes, 0, source_length/2);
 			delete[] destination_bytes;
 			return LOGERROR(ID_INVALID_FORMAT);
 		}

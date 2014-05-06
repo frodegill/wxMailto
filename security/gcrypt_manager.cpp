@@ -118,15 +118,15 @@ wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxUint8* plain, const
 	    GPG_ERR_NO_ERROR != (err=gcry_cipher_encrypt(handle, out, outsize, plain, plain_length)))
 	{
 		gcry_cipher_close(handle);
+		delete[] out;
 		return LOGERROR(ConvertStatus(err));
 	}
 	
 	gcry_cipher_close(handle);
 
-	encrypted = wxString::FromUTF8(reinterpret_cast<const char*>(out), outsize);
+	wxmailto_status status = StringUtils::ByteArrayToHexString(out, outsize, encrypted);
 	delete[] out;
-
-	return ID_OK;
+	return status;
 }
 
 wxmailto_status GcryptManager::Hash(const wxString& plaintext, wxString& hash)
