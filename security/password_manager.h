@@ -45,9 +45,9 @@ private:
 	wxmailto_status SetCredential(const wxString& master_passphrase, wxUInt& id, const wxString& location, const wxString& username, const wxString& password);
 	
 private:
-	wxmailto_status LoadLocation(wxUInt id, wxString& encrypted_location);
-	wxmailto_status LoadCredential(wxUInt id, wxString& encrypted_location, wxString& encrypted_username, wxString& encrypted_password);
-	wxmailto_status SaveCredential(wxUInt& id, const wxString& encrypted_location, const wxString& encrypted_username, const wxString& encrypted_password);
+	wxmailto_status LoadLocation(wxUInt id, wxString& encrypted_location_hex);
+	wxmailto_status LoadCredential(wxUInt id, wxString& encrypted_location_hex, wxString& encrypted_username_hex, wxString& encrypted_password_hex);
+	wxmailto_status SaveCredential(wxUInt& id, const wxString& encrypted_location_hex, const wxString& encrypted_username_hex, const wxString& encrypted_password_hex);
 	wxmailto_status UpdateCredentialPassphrase(const wxString& old_passphrase, const wxString& new_passphrase);
 	wxmailto_status DeleteCredential(wxUInt id);
 

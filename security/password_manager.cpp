@@ -332,7 +332,7 @@ wxmailto_status PasswordManager::ForgetCredential(wxUInt id)
 	}
 }
 
-wxmailto_status PasswordManager::LoadLocation(wxUInt id, wxString& encrypted_location)
+wxmailto_status PasswordManager::LoadLocation(wxUInt id, wxString& encrypted_location_hex)
 {
 	PocoGlue* poco_glue = wxGetApp().GetAppModuleManager()->GetPocoGlue();
 	if (!poco_glue)
@@ -353,12 +353,12 @@ wxmailto_status PasswordManager::LoadLocation(wxUInt id, wxString& encrypted_loc
 
 	poco_glue->ReleaseSession(session);
 	
-	encrypted_location = wxString::FromUTF8(encrypted_location_blob.rawContent(), encrypted_location_blob.size());
+	encrypted_location_hex = wxString::FromUTF8(encrypted_location_blob.rawContent(), encrypted_location_blob.size());
 
 	return ID_OK;
 }
 
-wxmailto_status PasswordManager::LoadCredential(wxUInt id, wxString& encrypted_location, wxString& encrypted_username, wxString& encrypted_password)
+wxmailto_status PasswordManager::LoadCredential(wxUInt id, wxString& encrypted_location_hex, wxString& encrypted_username_hex, wxString& encrypted_password_hex)
 {
 	PocoGlue* poco_glue = wxGetApp().GetAppModuleManager()->GetPocoGlue();
 	if (!poco_glue)
@@ -383,14 +383,14 @@ wxmailto_status PasswordManager::LoadCredential(wxUInt id, wxString& encrypted_l
 
 	poco_glue->ReleaseSession(session);
 	
-	encrypted_location = wxString::FromUTF8(encrypted_location_blob.rawContent(), encrypted_location_blob.size());
-	encrypted_username = wxString::FromUTF8(encrypted_username_blob.rawContent(), encrypted_username_blob.size());
-	encrypted_password = wxString::FromUTF8(encrypted_password_blob.rawContent(), encrypted_password_blob.size());
+	encrypted_location_hex = wxString::FromUTF8(encrypted_location_blob.rawContent(), encrypted_location_blob.size());
+	encrypted_username_hex = wxString::FromUTF8(encrypted_username_blob.rawContent(), encrypted_username_blob.size());
+	encrypted_password_hex = wxString::FromUTF8(encrypted_password_blob.rawContent(), encrypted_password_blob.size());
 
 	return ID_OK;
 }
 
-wxmailto_status PasswordManager::SaveCredential(wxUInt& id, const wxString& encrypted_location, const wxString& encrypted_username, const wxString& encrypted_password)
+wxmailto_status PasswordManager::SaveCredential(wxUInt& id, const wxString& encrypted_location_hex, const wxString& encrypted_username_hex, const wxString& encrypted_password_hex)
 {
 	wxmailto_status status;
 	wxBool update = true;
@@ -422,9 +422,9 @@ wxmailto_status PasswordManager::SaveCredential(wxUInt& id, const wxString& encr
 		return status;
 	}
 
-	const wxScopedCharBuffer encrypted_location_buffer = encrypted_location.ToUTF8();
-	const wxScopedCharBuffer encrypted_username_buffer = encrypted_username.ToUTF8();
-	const wxScopedCharBuffer encrypted_password_buffer = encrypted_password.ToUTF8();
+	const wxScopedCharBuffer encrypted_location_buffer = encrypted_location_hex.ToUTF8();
+	const wxScopedCharBuffer encrypted_username_buffer = encrypted_username_hex.ToUTF8();
+	const wxScopedCharBuffer encrypted_password_buffer = encrypted_password_hex.ToUTF8();
 	
 	Poco::Data::BLOB encrypted_location_blob(encrypted_location_buffer.data(), encrypted_location_buffer.length());
 	Poco::Data::BLOB encrypted_username_blob(encrypted_username_buffer.data(), encrypted_username_buffer.length());
