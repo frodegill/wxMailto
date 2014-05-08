@@ -29,7 +29,7 @@ PasswordManager::PasswordManager()
   m_obfuscated_master_password_length(0)
 {
 #ifdef WIPE_AFTER_USE
-	m_encrypted_sudo_password.WipeAfterUse();
+	m_encrypted_sudo_password_hex.WipeAfterUse();
 #endif
 }
 
@@ -70,13 +70,13 @@ wxmailto_status PasswordManager::GetMasterPassphrase(wxString& passphrase)
 			SetMasterPassphrase(wxEmptyString, "ToDo: get passphrase");
 		}
 
-		char* utf8_buffer = new char[m_obfuscated_master_password_length];
+		wxUint8* utf8_buffer = new wxUint8[m_obfuscated_master_password_length];
 		size_t i;
 		for (i=0; m_obfuscated_master_password_length>i; i++)
 		{
 			utf8_buffer[i] = m_obfuscated_master_password[i]^m_master_password_obfuscator[i];
 		}
-		passphrase = wxString::FromUTF8(utf8_buffer, m_obfuscated_master_password_length);
+		passphrase = wxString::FromUTF8(reinterpret_cast<const char*>(utf8_buffer), m_obfuscated_master_password_length);
 
 		memset(utf8_buffer, 0, m_obfuscated_master_password_length);
 		delete[] utf8_buffer;
@@ -96,8 +96,8 @@ wxmailto_status PasswordManager::SetMasterPassphrase(const wxString& old_passphr
 		m_obfuscated_master_password_length = utf8_buffer.length();
 		if (0<m_obfuscated_master_password_length)
 		{
-			m_obfuscated_master_password = new char[m_obfuscated_master_password_length];
-			m_master_password_obfuscator = new char[m_obfuscated_master_password_length];
+			m_obfuscated_master_password = new wxUint8[m_obfuscated_master_password_length];
+			m_master_password_obfuscator = new wxUint8[m_obfuscated_master_password_length];
 			size_t i;
 			for (i=0; m_obfuscated_master_password_length>i; i++)
 			{
@@ -128,12 +128,12 @@ void PasswordManager::ForgetMasterPassphrase()
 
 wxmailto_status PasswordManager::GetSudoPassword(wxString& password)
 {
-	return GenericDecrypt(m_encrypted_sudo_password, password, "sudo@wxMailto");
+	return GenericDecrypt(m_encrypted_sudo_password_hex, password, "sudo@wxMailto");
 }
 
 wxmailto_status PasswordManager::SetSudoPassword(wxString& password)
 {
-	return GenericEncrypt(password, m_encrypted_sudo_password, "sudo@wxMailto");
+	return GenericEncrypt(password, m_encrypted_sudo_password_hex, "sudo@wxMailto");
 }
 
 void PasswordManager::ForgetSudoPassword()
@@ -141,7 +141,7 @@ void PasswordManager::ForgetSudoPassword()
 	{
 		wxCriticalSectionLocker locker(wxGetApp().GetGlobalLockers()->m_credential_lock);
 
-		m_encrypted_sudo_password.Clear();
+		m_encrypted_sudo_password_hex.Clear();
 	}
 }
 
@@ -170,9 +170,9 @@ wxmailto_status PasswordManager::GetLocation(wxUInt id, wxString& location)
 			return status;
 		}
 
-		wxString encrypted_location;
-		if (ID_OK != (status=LoadLocation(id, encrypted_location)) ||
-		    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_location, derived_location_master_key, location)))
+		wxString encrypted_location_hex;
+		if (ID_OK != (status=LoadLocation(id, encrypted_location_hex)) ||
+		    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_location_hex, derived_location_master_key, location)))
 		{
 			delete[] derived_location_master_key;
 			return status;
@@ -234,13 +234,13 @@ wxmailto_status PasswordManager::GetCredential(const wxString& master_passphrase
 		return status;
 	}
 
-	wxString encrypted_location;
-	wxString encrypted_username;
-	wxString encrypted_password;
-	if (ID_OK != (status=LoadCredential(id, encrypted_location, encrypted_username, encrypted_password)) ||
-	    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_location, derived_location_master_key, location)) ||
-	    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_username, derived_username_master_key, username)) ||
-	    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_password, derived_password_master_key, password)))
+	wxString encrypted_location_hex;
+	wxString encrypted_username_hex;
+	wxString encrypted_password_hex;
+	if (ID_OK != (status=LoadCredential(id, encrypted_location_hex, encrypted_username_hex, encrypted_password_hex)) ||
+	    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_location_hex, derived_location_master_key, location)) ||
+	    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_username_hex, derived_username_master_key, username)) ||
+	    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_password_hex, derived_password_master_key, password)))
 	{
 		delete[] derived_location_master_key;
 		delete[] derived_username_master_key;
@@ -304,12 +304,12 @@ wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase
 		return status;
 	}
 
-	wxString encrypted_location;
-	wxString encrypted_username;
-	wxString encrypted_password;
-	if (ID_OK != (status=gcrypt_manager->EncryptWithDerivedKey(location, derived_location_master_key, encrypted_location)) ||
-	    ID_OK != (status=gcrypt_manager->EncryptWithDerivedKey(username, derived_username_master_key, encrypted_username)) ||
-	    ID_OK != (status=gcrypt_manager->EncryptWithDerivedKey(password, derived_password_master_key, encrypted_password)))
+	wxString encrypted_location_hex;
+	wxString encrypted_username_hex;
+	wxString encrypted_password_hex;
+	if (ID_OK != (status=gcrypt_manager->EncryptWithDerivedKey(location, derived_location_master_key, encrypted_location_hex)) ||
+	    ID_OK != (status=gcrypt_manager->EncryptWithDerivedKey(username, derived_username_master_key, encrypted_username_hex)) ||
+	    ID_OK != (status=gcrypt_manager->EncryptWithDerivedKey(password, derived_password_master_key, encrypted_password_hex)))
 	{
 		delete[] derived_location_master_key;
 		delete[] derived_username_master_key;
@@ -320,7 +320,7 @@ wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase
 	delete[] derived_location_master_key;
 	delete[] derived_username_master_key;
 	delete[] derived_password_master_key;
-	return SaveCredential(id, encrypted_location, encrypted_username, encrypted_password);
+	return SaveCredential(id, encrypted_location_hex, encrypted_username_hex, encrypted_password_hex);
 }
 
 wxmailto_status PasswordManager::ForgetCredential(wxUInt id)
@@ -582,7 +582,7 @@ wxmailto_status PasswordManager::DeleteCredential(wxUInt id)
 	return ID_OK;
 }
 
-wxmailto_status PasswordManager::CreateHash(const wxString& secret, const wxString& salt, wxString& hashed_value)
+wxmailto_status PasswordManager::CreateHash(const wxString& secret, const wxString& salt, wxString& hashed_value_hex)
 {
 	wxString plaintext;
 #ifdef WIPE_AFTER_USE
@@ -591,7 +591,7 @@ wxmailto_status PasswordManager::CreateHash(const wxString& secret, const wxStri
 	plaintext = secret+salt;
 	
 	GcryptManager* gcrypt_manager = wxGetApp().GetAppModuleManager()->GetGcryptManager();
-	return gcrypt_manager->Hash(plaintext, hashed_value);
+	return gcrypt_manager->Hash(plaintext, hashed_value_hex);
 }
 
 wxmailto_status PasswordManager::CreateDerivedKey(const wxString& plaintext, const wxString& salt, wxUint8* derived_key)
@@ -600,7 +600,7 @@ wxmailto_status PasswordManager::CreateDerivedKey(const wxString& plaintext, con
 	return gcrypt_manager->DeriveKey(plaintext, salt, derived_key);
 }
 
-wxmailto_status PasswordManager::GenericEncrypt(wxString& plaintext, wxString& encrypted, const wxString& salt)
+wxmailto_status PasswordManager::GenericEncrypt(wxString& plaintext, wxString& encrypted_hex, const wxString& salt)
 {
 	wxmailto_status status;
 	wxString master_passphrase;
@@ -628,13 +628,13 @@ wxmailto_status PasswordManager::GenericEncrypt(wxString& plaintext, wxString& e
 			return status;
 		}
 
-		status = gcrypt_manager->EncryptWithDerivedKey(plaintext, derived_master_key, encrypted);
+		status = gcrypt_manager->EncryptWithDerivedKey(plaintext, derived_master_key, encrypted_hex);
 		delete[] derived_master_key;
 		return status;
 	}
 }
 
-wxmailto_status PasswordManager::GenericDecrypt(const wxString& encrypted, wxString& plaintext, const wxString& salt)
+wxmailto_status PasswordManager::GenericDecrypt(const wxString& encrypted_hex, wxString& plaintext, const wxString& salt)
 {
 	wxmailto_status status;
 	wxString master_passphrase;
@@ -662,7 +662,7 @@ wxmailto_status PasswordManager::GenericDecrypt(const wxString& encrypted, wxStr
 			return status;
 		}
 
-		status = gcrypt_manager->DecryptWithDerivedKey(encrypted, derived_master_key, plaintext);
+		status = gcrypt_manager->DecryptWithDerivedKey(encrypted_hex, derived_master_key, plaintext);
 		delete[] derived_master_key;
 		return status;
 	}

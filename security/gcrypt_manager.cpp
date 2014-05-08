@@ -54,10 +54,20 @@ wxmailto_status GcryptManager::PrepareShutdown()
 	return ID_OK;
 }
 
-wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxString& encrypted, const wxUint8* derived_key, wxString& plaintext)
+wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxString& encrypted_hex, const wxUint8* derived_key, wxString& plaintext)
 {
-	const wxScopedCharBuffer encrypted_buffer = encrypted.ToUTF8();
-	return DecryptWithDerivedKey(reinterpret_cast<const wxUint8*>(encrypted_buffer.data()), encrypted_buffer.length(), derived_key, plaintext);
+	wxmailto_status status;
+	wxUint8* encrypted_buffer;
+	wxSizeT encrypted_buffer_length;
+	if (ID_OK!=(status=StringUtils::HexStringToByteArrayAllocates(encrypted_hex, encrypted_buffer, encrypted_buffer_length)))
+	{
+		plaintext.clear();
+		return status;
+	}
+	status = DecryptWithDerivedKey(encrypted_buffer, encrypted_buffer_length, derived_key, plaintext);
+	memset(encrypted_buffer, 0, encrypted_buffer_length);
+	delete[] encrypted_buffer;
+	return status;
 }
 
 wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxUint8* derived_key, wxString& plaintext)
@@ -92,13 +102,13 @@ wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxUint8* encrypted, c
 	return ID_OK;
 }
 
-wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxString& plaintext, const wxUint8* derived_key, wxString& encrypted)
+wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxString& plaintext, const wxUint8* derived_key, wxString& encrypted_hex)
 {
 	const wxScopedCharBuffer plaintext_buffer = plaintext.ToUTF8();
-	return EncryptWithDerivedKey(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), derived_key, encrypted);
+	return EncryptWithDerivedKey(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), derived_key, encrypted_hex);
 }
 
-wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxUint8* plain, const wxSizeT& plain_length, const wxUint8* derived_key, wxString& encrypted)
+wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxUint8* plain, const wxSizeT& plain_length, const wxUint8* derived_key, wxString& encrypted_hex)
 {
 	size_t outsize = GetRequiredBuffenLength(plain_length, GetCipherAlgorithm());
 	wxUint8* out = new wxUint8[outsize];
@@ -124,25 +134,25 @@ wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxUint8* plain, const
 	
 	gcry_cipher_close(handle);
 
-	wxmailto_status status = StringUtils::ByteArrayToHexString(out, outsize, encrypted);
+	wxmailto_status status = StringUtils::ByteArrayToHexString(out, outsize, encrypted_hex);
 	delete[] out;
 	return status;
 }
 
-wxmailto_status GcryptManager::Hash(const wxString& plaintext, wxString& hash)
+wxmailto_status GcryptManager::Hash(const wxString& plaintext, wxString& hash_hex)
 {
 	const wxScopedCharBuffer plaintext_buffer = plaintext.ToUTF8();
-	return Hash(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), hash);
+	return Hash(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), hash_hex);
 }
 
-wxmailto_status GcryptManager::Hash(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash)
+wxmailto_status GcryptManager::Hash(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash_hex)
 {
 	wxUint8* digest = new wxUint8[SHA512_HASH_LEN];
 	if (!digest)
 		return LOGERROR(ID_OUT_OF_MEMORY);
 
 	gcry_md_hash_buffer(GCRY_MD_SHA512, digest, plain, plain_length);
-	wxmailto_status status = StringUtils::ByteArrayToHexString(digest, SHA512_HASH_LEN, hash);
+	wxmailto_status status = StringUtils::ByteArrayToHexString(digest, SHA512_HASH_LEN, hash_hex);
 	delete[] digest;
 	return status;
 }

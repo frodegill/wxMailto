@@ -1,7 +1,7 @@
 #ifndef _PASSWORD_MANAGER_H_
 #define _PASSWORD_MANAGER_H_
 
-// Copyright (C) 2013  Frode Roxrud Gill
+// Copyright (C) 2013-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -51,19 +51,19 @@ private:
 	wxmailto_status UpdateCredentialPassphrase(const wxString& old_passphrase, const wxString& new_passphrase);
 	wxmailto_status DeleteCredential(wxUInt id);
 
-	wxmailto_status CreateHash(const wxString& secret, const wxString& salt, wxString& hashed_value);
+	wxmailto_status CreateHash(const wxString& secret, const wxString& salt, wxString& hashed_value_hex);
 
 	wxmailto_status CreateDerivedKey(const wxString& plaintext, const wxString& salt, wxUint8* derived_key);
 
 public:
-	wxmailto_status GenericEncrypt(wxString& plaintext, wxString& encrypted, const wxString& salt = "generic@wxMailto");
-	wxmailto_status GenericDecrypt(const wxString& encrypted, wxString& plaintext, const wxString& salt = "generic@wxMailto");
+	wxmailto_status GenericEncrypt(wxString& plaintext, wxString& encrypted_hex, const wxString& salt = "generic@wxMailto");
+	wxmailto_status GenericDecrypt(const wxString& encrypted_hex, wxString& plaintext, const wxString& salt = "generic@wxMailto");
 
 private:
-	char* m_obfuscated_master_password;
-	char* m_master_password_obfuscator;
+	wxUint8* m_obfuscated_master_password;
+	wxUint8* m_master_password_obfuscator;
 	size_t m_obfuscated_master_password_length;
-	wxString m_encrypted_sudo_password;
+	wxString m_encrypted_sudo_password_hex;
 };
 
 }

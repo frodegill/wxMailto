@@ -185,9 +185,9 @@ wxmailto_status PocoGlue::GetConnectionString(std::string& connection_string)
 	config->Read("Username", &username, wxEmptyString);
 	config->Read("Password", &password, wxEmptyString);
 #endif
-	wxString encrypted_connectionstring;
-	config->Read("connectionstring", &encrypted_connectionstring, wxEmptyString);
-	if (encrypted_connectionstring.IsEmpty())
+	wxString encrypted_connectionstring_hex;
+	config->Read("connectionstring", &encrypted_connectionstring_hex, wxEmptyString);
+	if (encrypted_connectionstring_hex.IsEmpty())
 	{
 #if 0
 		wxString server, port, database, username, password;
@@ -199,11 +199,12 @@ wxmailto_status PocoGlue::GetConnectionString(std::string& connection_string)
 		plaintext.WipeAfterUse();
 #endif
 		if (ID_OK != (status=wxGetApp().GetAppModuleManager()->GetPasswordManager()->
-			GenericEncrypt(plaintext, encrypted_connectionstring, "dsn@wxMailto")))
+			GenericEncrypt(plaintext, encrypted_connectionstring_hex, "dsn@wxMailto")))
 		{
 			return status;
 		}
-		config->Write("connectionstring", encrypted_connectionstring);
+		config->Write("connectionstring", encrypted_connectionstring_hex);
+		config->Flush();
 	}
 	else
 	{
@@ -213,7 +214,7 @@ wxmailto_status PocoGlue::GetConnectionString(std::string& connection_string)
 #endif
 
 		if (ID_OK != (status=wxGetApp().GetAppModuleManager()->GetPasswordManager()->
-			GenericDecrypt(encrypted_connectionstring, plaintext, "dsn@wxMailto")))
+			GenericDecrypt(encrypted_connectionstring_hex, plaintext, "dsn@wxMailto")))
 		{
 			return status;
 		}
