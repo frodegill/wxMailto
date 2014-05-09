@@ -73,10 +73,10 @@ wxmailto_status StringUtils::HexStringToByteArrayAllocates(const wxString& sourc
 		return LOGERROR(ID_OUT_OF_MEMORY);
 
 	wxUint8 msb, lsb;
-	for (wxSizeT i=0; source_length>i; i++)
+	for (wxSizeT i=0; source_length>i; )
 	{
-		msb = FROM_HEX[*source_bytes++];
-		lsb = FROM_HEX[*source_bytes++];
+		msb = FROM_HEX[*(source_bytes+i++)];
+		lsb = FROM_HEX[*(source_bytes+i++)];
 		if (16<=msb || 16<=lsb)
 		{
 			memset(destination_bytes, 0, source_length/2);
