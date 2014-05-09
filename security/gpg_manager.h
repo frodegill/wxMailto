@@ -33,7 +33,7 @@ public:
 	wxmailto_status GetSecretKeys(GPGKeyList& key_list, wxBool& truncated);
 
 public:
-	static wxmailto_status ConvertStatus(gpgme_error_t err);
+	static wxmailto_status ConvertStatus(gpg_err_code_t error_code);
 	
 private:
 };

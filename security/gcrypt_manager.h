@@ -52,7 +52,7 @@ public:
 	wxSizeT GetRequiredBuffenLength(const wxSizeT& length, wxInt algorithm) const;
 
 public:
-	static wxmailto_status ConvertStatus(gcry_error_t err) {return GPGManager::ConvertStatus(err);}
+	static wxmailto_status ConvertStatus(gpg_err_code_t error_code) {return GPGManager::ConvertStatus(error_code);}
 
 private:
 };

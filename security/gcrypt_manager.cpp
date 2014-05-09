@@ -77,23 +77,28 @@ wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxUint8* encrypted, c
 	if (!out)
 		return LOGERROR(ID_OUT_OF_MEMORY);
 	
-	gcry_error_t err;
+	gcry_error_t gcry_err;
+	gpg_err_code_t gpg_err;
+
 	gcry_cipher_hd_t handle;
-	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_open(&handle, GetCipherAlgorithm(), GetCipherMode(), GCRY_CIPHER_SECURE)))
+	gcry_err = gcry_cipher_open(&handle, GetCipherAlgorithm(), GetCipherMode(), GCRY_CIPHER_SECURE);
+	gpg_err = gcry_err_code(gcry_err);
+	if (GPG_ERR_NO_ERROR != gpg_err)
 	{
 		gcry_free(out);
-		return LOGERROR(ConvertStatus(err));
+		return LOGERROR(ConvertStatus(gpg_err));
 	}
-	
-	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_setkey(handle, derived_key, GetDerivedKeyLength())) ||
-	    GPG_ERR_NO_ERROR != (err=gcry_cipher_setiv(handle, g_iv16, sizeof(g_iv16)/sizeof(g_iv16[0]))) ||
-	    GPG_ERR_NO_ERROR != (err=gcry_cipher_decrypt(handle, out, outsize, encrypted, encrypted_length)))
+
+	if (GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setkey(handle, derived_key, GetDerivedKeyLength())) ||
+	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setiv(handle, g_iv16, sizeof(g_iv16)/sizeof(g_iv16[0]))) ||
+	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_decrypt(handle, out, outsize, encrypted, encrypted_length)))
 	{
+		gpg_err = gcry_err_code(gcry_err);
 		gcry_free(out);
 		gcry_cipher_close(handle);
-		return LOGERROR(ConvertStatus(err));
+		return LOGERROR(ConvertStatus(gpg_err));
 	}
-	
+
 	gcry_cipher_close(handle);
 
 	plaintext = wxString::FromUTF8(reinterpret_cast<const char*>(out), outsize);
@@ -115,23 +120,28 @@ wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxUint8* plain, const
 	if (!out)
 		return LOGERROR(ID_OUT_OF_MEMORY);
 	
-	gcry_error_t err;
+	gcry_error_t gcry_err;
+	gpg_err_code_t gpg_err;
+
 	gcry_cipher_hd_t handle;
-	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_open(&handle, GetCipherAlgorithm(), GetCipherMode(), GCRY_CIPHER_SECURE)))
+	gcry_err = gcry_cipher_open(&handle, GetCipherAlgorithm(), GetCipherMode(), GCRY_CIPHER_SECURE);
+	gpg_err = gcry_err_code(gcry_err);
+	if (GPG_ERR_NO_ERROR != gpg_err)
 	{
 		delete[] out;
-		return LOGERROR(ConvertStatus(err));
+		return LOGERROR(ConvertStatus(gpg_err));
 	}
 
-	if (GPG_ERR_NO_ERROR != (err=gcry_cipher_setkey(handle, derived_key, GetDerivedKeyLength())) ||
-	    GPG_ERR_NO_ERROR != (err=gcry_cipher_setiv(handle, g_iv16, sizeof(g_iv16)/sizeof(g_iv16[0]))) ||
-	    GPG_ERR_NO_ERROR != (err=gcry_cipher_encrypt(handle, out, outsize, plain, plain_length)))
+	if (GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setkey(handle, derived_key, GetDerivedKeyLength())) ||
+	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setiv(handle, g_iv16, sizeof(g_iv16)/sizeof(g_iv16[0]))) ||
+	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_encrypt(handle, out, outsize, plain, plain_length)))
 	{
+		gpg_err = gcry_err_code(gcry_err);
 		gcry_cipher_close(handle);
 		delete[] out;
-		return LOGERROR(ConvertStatus(err));
+		return LOGERROR(ConvertStatus(gpg_err));
 	}
-	
+
 	gcry_cipher_close(handle);
 
 	wxmailto_status status = StringUtils::ByteArrayToHexString(out, outsize, encrypted_hex);
@@ -170,8 +180,10 @@ wxmailto_status GcryptManager::DeriveKey(const wxUint8* plain, const wxSizeT& pl
                                       const wxUint8* salt, const wxSizeT& salt_length,
                                       wxUint8* derived_key)
 {
-	return ConvertStatus(gcry_kdf_derive(plain, plain_length, GCRY_KDF_PBKDF2, GCRY_MD_SHA512,
-                                       salt, salt_length, DERIVED_KEY_ITERATIONS, GetDerivedKeyLength(), derived_key));
+	gcry_error_t gcry_err = gcry_kdf_derive(plain, plain_length, GCRY_KDF_PBKDF2, GCRY_MD_SHA512,
+                                          salt, salt_length, DERIVED_KEY_ITERATIONS, GetDerivedKeyLength(), derived_key);
+	gpg_err_code_t gpg_err = gcry_err_code(gcry_err);
+	return ConvertStatus(gpg_err);
 }
 
 wxSizeT GcryptManager::GetDerivedKeyLength() const

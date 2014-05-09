@@ -48,7 +48,7 @@ wxmailto_status GPGManager::Initialize()
 	gpgme_set_locale(NULL, LC_MESSAGES, setlocale (LC_MESSAGES, NULL));
 #endif
 
-  if (GPG_ERR_NO_ERROR != gpgme_engine_check_version(GPGME_PROTOCOL_OpenPGP))
+  if (GPG_ERR_NO_ERROR != gpg_err_code(gpgme_engine_check_version(GPGME_PROTOCOL_OpenPGP)))
 		return LOGERROR(ID_GENERIC_ERROR);
 
 	wxGetApp().GetAppModuleManager()->RegisterModule(this);
@@ -60,7 +60,7 @@ wxmailto_status GPGManager::Initialize()
 	unit_tests.RunTests();
 #endif //RUN_TESTS
 
-#if 0
+#if 1
 	GPGKey key;
 	GetDefaultKey(key);
 #endif
@@ -97,24 +97,32 @@ wxmailto_status GPGManager::GetDefaultKey(GPGKey& WXUNUSED(key))
 
 wxmailto_status GPGManager::GetSecretKeys(GPGKeyList& key_list, wxBool& truncated)
 {
+	gpgme_error_t gpgme_err;
+	gpg_err_code_t gpg_err;
+
 	key_list.Clear();
 
 	gpgme_ctx_t ctx;
 	gpgme_key_t gpgme_key;
 
-	gpgme_error_t err;
-	if (GPG_ERR_NO_ERROR!=(err=gpgme_new(&ctx)))
-		return ConvertStatus(err);
+	gpgme_err=gpgme_new(&ctx);
+	gpg_err=gpg_err_code(gpgme_err);
+	if (GPG_ERR_NO_ERROR!=gpg_err)
+		return ConvertStatus(gpg_err);
 	
-	if (GPG_ERR_NO_ERROR!=(err=gpgme_op_keylist_start(ctx, NULL, true)))
+	gpgme_err=gpgme_op_keylist_start(ctx, NULL, true);
+	gpg_err=gpg_err_code(gpgme_err);
+	if (GPG_ERR_NO_ERROR!=gpg_err)
 	{
 		gpgme_release(ctx);
-		return ConvertStatus(err);
+		return ConvertStatus(gpg_err);
 	}
 
 	while (true)
 	{
-		if (GPG_ERR_NO_ERROR!=(err=gpgme_op_keylist_next(ctx, &gpgme_key)))
+		gpgme_err=gpgme_op_keylist_next(ctx, &gpgme_key);
+		gpg_err=gpg_err_code(gpgme_err);
+		if (GPG_ERR_NO_ERROR!=gpg_err)
 			break;
 
 		if (!gpgme_key->revoked && !gpgme_key->expired && !gpgme_key->disabled && !gpgme_key->invalid &&
@@ -140,28 +148,27 @@ wxmailto_status GPGManager::GetSecretKeys(GPGKeyList& key_list, wxBool& truncate
 		gpgme_key_release(gpgme_key);
 	}
 	
-	if (GPG_ERR_EOF == err)
-		err = GPG_ERR_NO_ERROR;
+	if (GPG_ERR_EOF == gpg_err)
+		gpg_err = GPG_ERR_NO_ERROR;
 
-	if (GPG_ERR_NO_ERROR != err)
+	if (GPG_ERR_NO_ERROR != gpg_err)
 	{
-		fprintf(stderr, "can not list keys: %s\n", gpgme_strerror(err));
+		fprintf(stderr, "can not list keys: %s\n", gpgme_strerror(gpgme_err));
 	}
 	
 	gpgme_keylist_result_t list_result = gpgme_op_keylist_result(ctx);
 	truncated = list_result->truncated;
 
 	gpgme_release (ctx);
-	return ConvertStatus(err);
+	return ConvertStatus(gpg_err);
 }
 
-wxmailto_status GPGManager::ConvertStatus(gpgme_error_t err)
+wxmailto_status GPGManager::ConvertStatus(gpg_err_code_t error_code)
 {
-	gcry_err_code_t error_code = gcry_err_code(err);
  	switch(error_code)
 	{
 		case GPG_ERR_NO_ERROR: return ID_OK;
-		case GPG_ERR_ENOMEM: return ID_OUT_OF_MEMORY;
+		case GPG_ERR_ENOMEM: return LOGERROR(ID_OUT_OF_MEMORY);
 		default: return LOGERROR(ID_GENERIC_ERROR);
 	}
 }
