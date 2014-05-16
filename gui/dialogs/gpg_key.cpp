@@ -47,7 +47,7 @@ bool GPGKeyDialog::Show()
 	wxASSERT(NULL!=config);
 	if (!config)
 		return false;
-
+#if 0
 	wxString value;
 	config->Read("Server", &value, wxEmptyString);
 	wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_SERVER)), wxTextCtrl)->SetValue(value);
@@ -63,7 +63,7 @@ bool GPGKeyDialog::Show()
 
 	config->Read("Password", &value, wxEmptyString);
 	wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_PASSWORD)), wxTextCtrl)->SetValue(value);
-
+#endif
 	return wxDialog::Show(true);
 }
 
@@ -73,6 +73,7 @@ void GPGKeyDialog::OnGenerateNewKeyClicked(wxCommandEvent& WXUNUSED(event))
 
 void GPGKeyDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 {
+#if 0
 	wxConfigBase* config = wxConfigBase::Get();
 	wxASSERT(NULL!=config);
 	if (config)
@@ -84,7 +85,7 @@ void GPGKeyDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 		config->Write("Password", wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_PASSWORD)), wxTextCtrl)->GetValue());
 		config->Flush();
 	}
-	
+#endif
 	{
 		wxCriticalSectionLocker locker(*m_dialog_critical_section);
 		
@@ -104,9 +105,10 @@ void GPGKeyDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 
 wxSizer* GPGKeyDialog::GPGKeyDialogFunc(wxWindow* parent, wxBool call_fit, wxBool set_sizer)
 {
+#if 0
 	wxSizerFlags text_flags = wxSizerFlags(0).Left().Border(wxRIGHT, 5);
 	wxSizerFlags edit_flags = wxSizerFlags(1).Left().Expand();
-
+#endif
 	wxBoxSizer* dialog_sizer = new wxBoxSizer(wxVERTICAL);
 
 	wxListCtrl* key_listctrl = new wxListCtrl(parent, wxGetApp().GetWindowID(IDManager::IDL_KEYS),
@@ -114,7 +116,7 @@ wxSizer* GPGKeyDialog::GPGKeyDialogFunc(wxWindow* parent, wxBool call_fit, wxBoo
 	                            wxLC_REPORT|wxLC_SINGLE_SEL|wxLC_SORT_ASCENDING|wxLC_VRULES);
 	dialog_sizer->Add(key_listctrl, wxSizerFlags(1).Center().Expand().Border(wxALL, 5));
 	PopulateKeyListCtrl(key_listctrl);
-	
+#if 0
 	wxFlexGridSizer* form_sizer = new wxFlexGridSizer(5, 2, 0, 0);
 
 	wxStaticText* server_text = new wxStaticText(parent, -1, wxString(_("Server")), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
@@ -148,7 +150,7 @@ wxSizer* GPGKeyDialog::GPGKeyDialogFunc(wxWindow* parent, wxBool call_fit, wxBoo
 	form_sizer->Add(password_edit, edit_flags);
 
 	dialog_sizer->Add(form_sizer, wxSizerFlags(1).Center().Expand().Border(wxALL, 5));
-
+#endif
 	
  	wxButton* generate_new_key_button = new wxButton(parent, wxGetApp().GetWindowID(IDManager::IDB_GENERATE_NEW_KEY));
 	dialog_sizer->Add(generate_new_key_button, wxSizerFlags(1).Center().Expand().Border(wxALL, 5));

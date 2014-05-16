@@ -128,12 +128,12 @@ void PasswordManager::ForgetMasterPassphrase()
 
 wxmailto_status PasswordManager::GetSudoPassword(wxString& password)
 {
-	return GenericDecrypt(m_encrypted_sudo_password_hex, password, "sudo@wxMailto");
+	return GenericDecrypt(m_encrypted_sudo_password_hex, password, SUDO_SALT);
 }
 
 wxmailto_status PasswordManager::SetSudoPassword(wxString& password)
 {
-	return GenericEncrypt(password, m_encrypted_sudo_password_hex, "sudo@wxMailto");
+	return GenericEncrypt(password, m_encrypted_sudo_password_hex, SUDO_SALT);
 }
 
 void PasswordManager::ForgetSudoPassword()
@@ -164,7 +164,7 @@ wxmailto_status PasswordManager::GetLocation(wxUInt id, wxString& location)
 			return LOGERROR(ID_OUT_OF_MEMORY);
 
 		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
-		    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@location@wxMailto",id), derived_location_master_key)))
+		    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format(LOCATION_SALT,id), derived_location_master_key)))
 		{
 			delete[] derived_location_master_key;
 			return status;
@@ -224,9 +224,9 @@ wxmailto_status PasswordManager::GetCredential(const wxString& master_passphrase
 		return LOGERROR(ID_OUT_OF_MEMORY);
 	}
 
-	if (ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@location@wxMailto",id), derived_location_master_key)) ||
-	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@username@wxMailto",id), derived_username_master_key)) ||
-	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@password@wxMailto",id), derived_password_master_key)))
+	if (ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format(LOCATION_SALT,id), derived_location_master_key)) ||
+	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format(USERNAME_SALT,id), derived_username_master_key)) ||
+	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format(PASSWORD_SALT,id), derived_password_master_key)))
 	{
 		delete[] derived_location_master_key;
 		delete[] derived_username_master_key;
@@ -294,9 +294,9 @@ wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase
 		return LOGERROR(ID_OUT_OF_MEMORY);
 	}
 
-	if (ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@location@wxMailto",id), derived_location_master_key)) ||
-	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@username@wxMailto",id), derived_username_master_key)) ||
-	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format("%d@password@wxMailto",id), derived_password_master_key)))
+	if (ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format(LOCATION_SALT,id), derived_location_master_key)) ||
+	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format(USERNAME_SALT,id), derived_username_master_key)) ||
+	    ID_OK != (status=CreateDerivedKey(master_passphrase, wxString::Format(PASSWORD_SALT,id), derived_password_master_key)))
 	{
 		delete[] derived_location_master_key;
 		delete[] derived_username_master_key;
@@ -600,12 +600,11 @@ wxmailto_status PasswordManager::CreateDerivedKey(const wxString& plaintext, con
 	return gcrypt_manager->DeriveKey(plaintext, salt, derived_key);
 }
 
-wxmailto_status PasswordManager::GenericEncrypt(wxString& plaintext, wxString& encrypted_hex, const wxString& salt)
+wxmailto_status PasswordManager::GenericEncrypt(const wxString& plaintext, wxString& encrypted_hex, const wxString& salt)
 {
 	wxmailto_status status;
 	wxString master_passphrase;
 #ifdef WIPE_AFTER_USE
-	plaintext.WipeAfterUse();
 	master_passphrase.WipeAfterUse();
 #endif
 

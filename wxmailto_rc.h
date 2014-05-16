@@ -1,7 +1,7 @@
 #ifndef _WXMAILTO_RC_H_
 #define _WXMAILTO_RC_H_
 
-// Copyright (C) 2009-2013  Frode Roxrud Gill
+// Copyright (C) 2009-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -26,13 +26,9 @@ ID_NEWVERSION_DIALOG,
 ID_PROGRESS_DIALOG,
 
 //Dialog control constants (IDD)
-IDD_DATABASE,
+IDD_CONNECTIONSTRING,
 IDD_HTMLWINDOW,
 IDD_MESSAGE,
-IDD_PASSWORD,
-IDD_PORT,
-IDD_SERVER,
-IDD_USERNAME,
 
 //Button constants (IDB)
 IDB_GENERATE_NEW_KEY,

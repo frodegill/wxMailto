@@ -1,5 +1,5 @@
 
-// Copyright (C) 2009-2013  Frode Roxrud Gill
+// Copyright (C) 2009-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -18,6 +18,7 @@
 #include "datasource.h"
 
 #include "../wxmailto_app.h"
+#include "../../storage/config_helper.h"
 #include "../../wxmailto_rc.h"
 
 
@@ -44,38 +45,31 @@ bool DatasourceDialog::Show()
 	if (!config)
 		return false;
 
-	wxString value;
-	config->Read("Server", &value, wxEmptyString);
-	wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_SERVER)), wxTextCtrl)->SetValue(value);
+	wxString encrypted_connectionstring_hex;
+	wxString plaintext_connectionstring;
+#ifdef WIPE_AFTER_USE
+	plaintext_connectionstring.WipeAfterUse();
+#endif
 
-	config->Read("Port", &value, "3306");
-	wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_PORT)), wxTextCtrl)->SetValue(value);
+	if (ID_OK != ConfigHelper::ReadEncrypted(CONFIG_CONNECTIONSTRING, plaintext_connectionstring, wxEmptyString, DSN_SALT))
+	{
+		return false;
+	}
 
-	config->Read("Database", &value, wxEmptyString);
-	wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_DATABASE)), wxTextCtrl)->SetValue(value);
-
-	config->Read("Username", &value, wxEmptyString);
-	wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_USERNAME)), wxTextCtrl)->SetValue(value);
-
-	config->Read("Password", &value, wxEmptyString);
-	wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_PASSWORD)), wxTextCtrl)->SetValue(value);
+	wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_CONNECTIONSTRING)), wxTextCtrl)->SetValue(plaintext_connectionstring);
 
 	return wxDialog::Show(true);
 }
 
 void DatasourceDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 {
-	wxConfigBase* config = wxConfigBase::Get();
-	wxASSERT(NULL!=config);
-	if (config)
-	{
-		config->Write("Server", wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_SERVER)), wxTextCtrl)->GetValue());
-		config->Write("Port", wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_PORT)), wxTextCtrl)->GetValue());
-		config->Write("Database", wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_DATABASE)), wxTextCtrl)->GetValue());
-		config->Write("Username", wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_USERNAME)), wxTextCtrl)->GetValue());
-		config->Write("Password", wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_PASSWORD)), wxTextCtrl)->GetValue());
-		config->Flush();
-	}
+	wxString plaintext_connectionstring;
+#ifdef WIPE_AFTER_USE
+	plaintext_connectionstring.WipeAfterUse();
+#endif
+	plaintext_connectionstring = wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_CONNECTIONSTRING)), wxTextCtrl)->GetValue();
+
+	ConfigHelper::WriteEncrypted(CONFIG_CONNECTIONSTRING, plaintext_connectionstring, DSN_SALT, true);
 	
 	{
 		wxCriticalSectionLocker locker(*m_dialog_critical_section);
@@ -103,35 +97,11 @@ wxSizer* DatasourceDialog::DatasourceDialogFunc(wxWindow* parent, wxBool call_fi
 
 	wxFlexGridSizer* form_sizer = new wxFlexGridSizer(3, 2, 0, 0);
 
-	wxStaticText* server_text = new wxStaticText(parent, -1, wxString(_("Server")), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
-	form_sizer->Add(server_text, text_flags);
+	wxStaticText* connectionstring_text = new wxStaticText(parent, -1, wxString(_("ConnectionString")), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
+	form_sizer->Add(connectionstring_text, text_flags);
 
-	wxTextCtrl* server_edit = new wxTextCtrl(parent, wxGetApp().GetWindowID(IDManager::IDD_SERVER), wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
-	form_sizer->Add(server_edit, edit_flags);
-
-	wxStaticText* port_text = new wxStaticText(parent, -1, wxString(_("Port")), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
-	form_sizer->Add(port_text, text_flags);
-
-	wxTextCtrl* port_edit = new wxTextCtrl(parent, wxGetApp().GetWindowID(IDManager::IDD_PORT), wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
-	form_sizer->Add(port_edit, edit_flags);
-
-	wxStaticText* database_text = new wxStaticText(parent, -1, wxString(_("Database")), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
-	form_sizer->Add(database_text, text_flags);
-
-	wxTextCtrl* database_edit = new wxTextCtrl(parent, wxGetApp().GetWindowID(IDManager::IDD_DATABASE), wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
-	form_sizer->Add(database_edit, edit_flags);
-
-	wxStaticText* username_text = new wxStaticText(parent, -1, wxString(_("Username")), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
-	form_sizer->Add(username_text, text_flags);
-
-	wxTextCtrl* username_edit = new wxTextCtrl(parent, wxGetApp().GetWindowID(IDManager::IDD_USERNAME), wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
-	form_sizer->Add(username_edit, edit_flags);
-
-	wxStaticText* password_text = new wxStaticText(parent, -1, wxString(_("Password")), wxDefaultPosition, wxDefaultSize, wxALIGN_LEFT);
-	form_sizer->Add(password_text, text_flags);
-
-	wxTextCtrl* password_edit = new wxTextCtrl(parent, wxGetApp().GetWindowID(IDManager::IDD_PASSWORD), wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
-	form_sizer->Add(password_edit, edit_flags);
+	wxTextCtrl* connectionstring_edit = new wxTextCtrl(parent, wxGetApp().GetWindowID(IDManager::IDD_CONNECTIONSTRING), wxEmptyString, wxDefaultPosition, wxDefaultSize, 0);
+	form_sizer->Add(connectionstring_edit, edit_flags);
 
 	dialog_sizer->Add(form_sizer, wxSizerFlags(1).Center().Expand().Border(wxALL, 5));
 

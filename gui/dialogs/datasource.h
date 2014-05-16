@@ -1,7 +1,7 @@
 #ifndef _DATASOURCE_DLG_H_
 #define _DATASOURCE_DLG_H_
 
-// Copyright (C) 2009-2013  Frode Roxrud Gill
+// Copyright (C) 2009-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -13,6 +13,9 @@
 
 namespace wxMailto
 {
+
+#define DSN_SALT "dsn@wxMailto"
+
 
 class DatasourceDialog : public ThreadedModalDialog
 {
@@ -28,11 +31,7 @@ private:
 	wxSizer* DatasourceDialogFunc(wxWindow* parent, wxBool call_fit=true, wxBool set_sizer=true);
 
 private:
-	wxString* m_server;
-	wxString* m_port;
-	wxString* m_database;
-	wxString* m_username;
-	wxString* m_password;
+	wxString* m_connectionstring;
 
 private:
     DECLARE_EVENT_TABLE()

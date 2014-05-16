@@ -1,7 +1,7 @@
 #ifndef _POCO_GLUE_H_
 #define _POCO_GLUE_H_
 
-// Copyright (C) 2012-2013  Frode Roxrud Gill
+// Copyright (C) 2012-2014  Frode Roxrud Gill
 // See license.h for License
 
 #ifdef __GNUG__
@@ -42,9 +42,6 @@ public:
 
 private:
 	wxmailto_status GetConnectionString(std::string& connection_string);
-#if 0
-	wxmailto_status GetDatasourceInfo(wxString& server, wxString& port, wxString& database, wxString& username, wxString& password);
-#endif
 	wxmailto_status UpdateDatabaseIfNeeded();
 
 private:

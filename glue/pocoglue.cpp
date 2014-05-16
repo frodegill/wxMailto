@@ -16,6 +16,7 @@
 #include <Poco/Data/ODBC/Connector.h>
 
 #include "../gui/app_module_manager.h"
+#include "../storage/config_helper.h"
 #include "../storage/database_update.h"
 #include "../wxmailto_rc.h"
 
@@ -48,7 +49,7 @@ wxmailto_status PocoGlue::Initialize()
 		return LOGERROR(ID_INVALID_DATASOURCE);
 
 	Poco::Data::ODBC::Connector::registerConnector();
-	m_pool = new Poco::Data::SessionPool("ODBC", connection_string);
+	m_pool = new Poco::Data::SessionPool("wxMailto-pool", connection_string);
 
 	//Update database, if needed
 	if (ID_OK!=(status=UpdateDatabaseIfNeeded()))
@@ -171,83 +172,30 @@ wxmailto_status PocoGlue::GetConnectionString(std::string& connection_string)
 	if (!config)
 		return LOGERROR(ID_NULL_POINTER);
 
-#if 0
-	wxString server, port, database, username, password;
-	config->Read("Server", &server, wxEmptyString);
-	if (server.IsEmpty())
-	{
-		if (ID_OK!=GetDatasourceInfo(server, port, database, username, password))
-			return LOGERROR(ID_INVALID_DATASOURCE);
-	}
-
-	config->Read("Port",     &port,     wxEmptyString);
-	config->Read("Database", &database, wxEmptyString);
-	config->Read("Username", &username, wxEmptyString);
-	config->Read("Password", &password, wxEmptyString);
-#endif
 	wxString encrypted_connectionstring_hex;
-	config->Read("connectionstring", &encrypted_connectionstring_hex, wxEmptyString);
+	config->Read(CONFIG_CONNECTIONSTRING, &encrypted_connectionstring_hex, wxEmptyString);
 	if (encrypted_connectionstring_hex.IsEmpty())
 	{
-#if 0
-		wxString server, port, database, username, password;
-		if (ID_OK!=GetDatasourceInfo(server, port, database, username, password))
-			return LOGERROR(ID_INVALID_DATASOURCE);
-#endif
-		wxString plaintext = "DSN=wxMailto;;;;";
-#ifdef WIPE_AFTER_USE
-		plaintext.WipeAfterUse();
-#endif
-		if (ID_OK != (status=wxGetApp().GetAppModuleManager()->GetPasswordManager()->
-			GenericEncrypt(plaintext, encrypted_connectionstring_hex, "dsn@wxMailto")))
+		ThreadedModalDialogLauncher datasource_dialog;
+		if (ID_OK!=(status=datasource_dialog.Show(wxGetApp().GetWindowID(IDManager::ID_DATASOURCE_DIALOG))))
 		{
 			return status;
 		}
-		config->Write("connectionstring", encrypted_connectionstring_hex);
-		config->Flush();
 	}
-	else
-	{
-		wxString plaintext;
+
+	wxString plaintext_connectionstring;
 #ifdef WIPE_AFTER_USE
-		plaintext.WipeAfterUse();
+	plaintext_connectionstring.WipeAfterUse();
 #endif
-
-		if (ID_OK != (status=wxGetApp().GetAppModuleManager()->GetPasswordManager()->
-			GenericDecrypt(encrypted_connectionstring_hex, plaintext, "dsn@wxMailto")))
-		{
-			return status;
-		}
-
-		connection_string = plaintext;
-	}
-
-	return ID_OK;
-}
-#if 0
-wxmailto_status PocoGlue::GetDatasourceInfo(wxString& server, wxString& port, wxString& database, wxString& username, wxString& password)
-{
-	wxConfigBase* config = wxConfigBase::Get();
-	wxASSERT(NULL!=config);
-	if (!config)
-		return LOGERROR(ID_NULL_POINTER);
-
-	wxmailto_status status;
-	ThreadedModalDialogLauncher datasource_dialog;
-	if (ID_OK!=(status=datasource_dialog.Show(wxGetApp().GetWindowID(IDManager::ID_DATASOURCE_DIALOG))))
+	if (ID_OK!=(status=ConfigHelper::ReadEncrypted(CONFIG_CONNECTIONSTRING, plaintext_connectionstring, wxEmptyString, DSN_SALT)))
 	{
 		return status;
 	}
-	
-	config->Read("Server",   &server,   wxEmptyString);
-	config->Read("Server",   &port,     wxEmptyString);
-	config->Read("Database", &database, wxEmptyString);
-	config->Read("Username", &username, wxEmptyString);
-	config->Read("Password", &password, wxEmptyString);
 
-  return ID_OK;
+	connection_string = plaintext_connectionstring;
+	return ID_OK;
 }
-#endif
+
 wxmailto_status PocoGlue::UpdateDatabaseIfNeeded()
 {
 	wxmailto_status status;

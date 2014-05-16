@@ -15,6 +15,12 @@
 namespace wxMailto
 {
 
+#define GENERIC_SALT  "generic@wxMailto"
+#define LOCATION_SALT "%d@location@wxMailto"
+#define PASSWORD_SALT "%d@password@wxMailto"
+#define SUDO_SALT     "sudo@wxMailto"
+#define USERNAME_SALT "%d@username@wxMailto"
+
 class PasswordManager : public wxMailto_Module
 {
 public:
@@ -56,8 +62,8 @@ private:
 	wxmailto_status CreateDerivedKey(const wxString& plaintext, const wxString& salt, wxUint8* derived_key);
 
 public:
-	wxmailto_status GenericEncrypt(wxString& plaintext, wxString& encrypted_hex, const wxString& salt = "generic@wxMailto");
-	wxmailto_status GenericDecrypt(const wxString& encrypted_hex, wxString& plaintext, const wxString& salt = "generic@wxMailto");
+	wxmailto_status GenericEncrypt(const wxString& plaintext, wxString& encrypted_hex, const wxString& salt = GENERIC_SALT);
+	wxmailto_status GenericDecrypt(const wxString& encrypted_hex, wxString& plaintext, const wxString& salt = GENERIC_SALT);
 
 private:
 	wxUint8* m_obfuscated_master_password;
