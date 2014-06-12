@@ -9,7 +9,7 @@ all:    $(PROGRAM)
 
 # source files
 PCH = pch.h
-WXWIDGETS_VERSION = 3.0
+#WXWIDGETS_VERSION = 3.1
 DEBUG_INFO = YES
 RUN_TESTS = YES
 SOURCES = $(shell find . -name '*.cpp')
@@ -17,7 +17,10 @@ OBJECTS = $(SOURCES:.cpp=.o)
 DEPS = $(OBJECTS:.o=.dep)
 
 ######## compiler- and linker settings #########
-WX_CONFIG := wx-config --version=$(WXWIDGETS_VERSION)
+WX_CONFIG := wx-config
+#ifdef WXWIDGETS_VERSION
+ WX_CONFIG += --version=$(WXWIDGETS_VERSION)
+#endif
 CXX = $(shell $(WX_CONFIG) --cxx)
 CFLAGS = -DHAVE_INTTYPES_H $(shell pkg-config gnutls --cflags) $(shell gpgme-config --thread=pthread --cflags) $(shell pkg-config libidn --cflags) $(shell pkg-config libgsasl --cflags)
 CXXFLAGS = $(shell $(WX_CONFIG) --cxxflags)
@@ -33,6 +36,8 @@ else
  CPPFLAGS += -O
  LIBSFLAGS += -lPocoODBC -lPocoMySQL -lPocoData -lPocoFoundation
 endif
+
+# CPPFLAGS += -DWIPE_AFTER_USE
 
 ifdef RUN_TESTS
  CPPFLAGS += -DRUN_TESTS
