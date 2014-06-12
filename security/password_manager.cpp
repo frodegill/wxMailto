@@ -275,11 +275,6 @@ wxmailto_status PasswordManager::SetCredential(wxUInt& id, const wxString& locat
 wxmailto_status PasswordManager::SetCredential(const wxString& master_passphrase, wxUInt& id, const wxString& location, const wxString& username, const wxString& password)
 {
 	wxmailto_status status;
-#ifdef WIPE_AFTER_USE
-	location.WipeAfterUse();
-	username.WipeAfterUse();
-	password.WipeAfterUse();
-#endif
 
 	GcryptManager* gcrypt_manager = wxGetApp().GetAppModuleManager()->GetGcryptManager();
 

@@ -10,7 +10,6 @@
 
 #include "../gui/wxmailto_module.h"
 
-#undef WIPE_AFTER_USE
 
 namespace wxMailto
 {
