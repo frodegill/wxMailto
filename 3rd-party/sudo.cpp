@@ -164,16 +164,28 @@ wxmailto_status Sudo::ExecuteInPty(const wxString& cmd)
 
 			// If we're here, ret was >0. 1 means there's a full line; 2 that we got EAGAIN, which may mean it's waiting for a password
 			if (FD_ISSET(fd, &fd_out) && line.Lower().Contains("password") && !line.Lower().Contains("incorrect"))
-			{				
-				wxString pw;
-				if (ID_OK!=GetPasswordMgr()->GetSudoPassword(pw) || pw.empty())
+			{
+				wxmailto_status wx_status;
+				SafeString pw;
+				SafeString linefeed;
+				if (ID_OK!=GetPasswordMgr()->GetSudoPassword(pw) ||
+				    pw.IsEmpty() ||
+				    ID_OK!=linefeed.StrDup("\n") ||
+					  ID_OK!=pw.Append(linefeed))
 				{
 					close(fd);
 					return LOGERROR(ID_GENERIC_ERROR); // Presumably the user cancelled
 				}
 
-				pw << '\n';
-				if (-1 == write(fd, pw.mb_str(wxConvUTF8), pw.Len()))
+				const wxUint8* pw_str;
+				wxSizeT pw_length;
+				if (ID_OK!=(wx_status=pw.Get(pw_str, pw_length)))
+				{
+					close(fd);
+					return LOGERROR(wx_status);
+				}
+
+				if (-1 == write(fd, pw_str, pw_length))
 				{
 					close(fd);
 					return LOGERROR_MSG(ID_GENERIC_ERROR, "Writing the string failed");

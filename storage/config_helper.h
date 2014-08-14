@@ -9,7 +9,7 @@
 #endif
 
 #include "../wxmailto_errors.h"
-
+#include "../string/safestring.h"
 
 namespace wxMailto
 {
@@ -23,8 +23,8 @@ private:
 	ConfigHelper() {}
 
 public:
-	static wxmailto_status ReadEncrypted(const wxString key, wxString& plaintext_value, const wxString& default_value, const wxString& salt);
-	static wxmailto_status WriteEncrypted(const wxString key, const wxString plaintext_value, const wxString& salt, wxBool flush=true);
+	static wxmailto_status ReadEncrypted(const wxString key, SafeString& plaintext_value, const SafeString& default_value, const SafeString& salt);
+	static wxmailto_status WriteEncrypted(const wxString key, const SafeString& plaintext_value, const SafeString& salt, wxBool flush=true);
 };
 
 }

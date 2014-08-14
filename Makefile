@@ -37,8 +37,6 @@ else
  LIBSFLAGS += -lPocoODBC -lPocoMySQL -lPocoData -lPocoFoundation
 endif
 
-# CPPFLAGS += -DWIPE_AFTER_USE
-
 ifdef RUN_TESTS
  CPPFLAGS += -DRUN_TESTS
 endif

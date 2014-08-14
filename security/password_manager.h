@@ -33,36 +33,36 @@ public:  //From wxMailto_Module
 	wxmailto_status PrepareShutdown();
 
 public:
-	wxmailto_status GetMasterPassphrase(wxString& passphrase); //master passphrase is not stored
-	wxmailto_status SetMasterPassphrase(const wxString& old_passphrase, const wxString& new_passphrase);
+	wxmailto_status GetMasterPassphrase(SafeString& passphrase); //master passphrase is not stored
+	wxmailto_status SetMasterPassphrase(const SafeString& old_passphrase, const SafeString& new_passphrase);
 	void ForgetMasterPassphrase();
 
-	wxmailto_status GetSudoPassword(wxString& password); //sudo password is not stored
-	wxmailto_status SetSudoPassword(wxString& password);
+	wxmailto_status GetSudoPassword(SafeString& password); //sudo password is not stored
+	wxmailto_status SetSudoPassword(const SafeString& password);
 	void ForgetSudoPassword();
 
-	wxmailto_status GetLocation(wxUInt id, wxString& location);
-	wxmailto_status GetCredential(wxUInt id, wxString& location, wxString& username, wxString& password);
-	wxmailto_status SetCredential(wxUInt& id, const wxString& location, const wxString& username, const wxString& password);
+	wxmailto_status GetLocation(wxUInt id, SafeString& location);
+	wxmailto_status GetCredential(wxUInt id, SafeString& location, SafeString& username, SafeString& password);
+	wxmailto_status SetCredential(wxUInt& id, const SafeString& location, const SafeString& username, const SafeString& password);
 	wxmailto_status ForgetCredential(wxUInt id);
 private:
-	wxmailto_status GetCredential(const wxString& master_passphrase, wxUInt id, wxString& location, wxString& username, wxString& password);
-	wxmailto_status SetCredential(const wxString& master_passphrase, wxUInt& id, const wxString& location, const wxString& username, const wxString& password);
+	wxmailto_status GetCredential(const SafeString& master_passphrase, wxUInt id, SafeString& location, SafeString& username, SafeString& password);
+	wxmailto_status SetCredential(const SafeString& master_passphrase, wxUInt& id, const SafeString& location, const SafeString& username, const SafeString& password);
 	
 private:
 	wxmailto_status LoadLocation(wxUInt id, wxString& encrypted_location_hex);
 	wxmailto_status LoadCredential(wxUInt id, wxString& encrypted_location_hex, wxString& encrypted_username_hex, wxString& encrypted_password_hex);
 	wxmailto_status SaveCredential(wxUInt& id, const wxString& encrypted_location_hex, const wxString& encrypted_username_hex, const wxString& encrypted_password_hex);
-	wxmailto_status UpdateCredentialPassphrase(const wxString& old_passphrase, const wxString& new_passphrase);
+	wxmailto_status UpdateCredentialPassphrase(const SafeString& old_passphrase, const SafeString& new_passphrase);
 	wxmailto_status DeleteCredential(wxUInt id);
 
-	wxmailto_status CreateHash(const wxString& secret, const wxString& salt, wxString& hashed_value_hex);
+	wxmailto_status CreateHash(const SafeString& secret, const SafeString& salt, wxString& hashed_value_hex);
 
-	wxmailto_status CreateDerivedKey(const wxString& plaintext, const wxString& salt, wxUint8* derived_key);
+	wxmailto_status CreateDerivedKey(const SafeString& plaintext, const SafeString& salt, wxUint8* derived_key);
 
 public:
-	wxmailto_status GenericEncrypt(const wxString& plaintext, wxString& encrypted_hex, const wxString& salt = GENERIC_SALT);
-	wxmailto_status GenericDecrypt(const wxString& encrypted_hex, wxString& plaintext, const wxString& salt = GENERIC_SALT);
+	wxmailto_status GenericEncrypt(const SafeString& plaintext, const SafeString& salt, wxString& encrypted_hex);
+	wxmailto_status GenericDecrypt(const wxString& encrypted_hex, const SafeString& salt, SafeString& plaintext);
 
 private:
 	wxUint8* m_obfuscated_master_password;

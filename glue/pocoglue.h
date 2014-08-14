@@ -13,6 +13,7 @@
 #include <wx/string.h>
 
 #include "../gui/wxmailto_module.h"
+#include "../string/safestring.h"
 
 
 namespace wxMailto
@@ -41,7 +42,7 @@ public:
 	static wxmailto_status LogError(const wxString& message);
 
 private:
-	wxmailto_status GetConnectionString(std::string& connection_string);
+	wxmailto_status GetConnectionString(SafeString& plaintext_connectionstring);
 	wxmailto_status UpdateDatabaseIfNeeded();
 
 private:

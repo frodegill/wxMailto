@@ -20,24 +20,29 @@
 using namespace wxMailto;
 
 
-wxmailto_status ConfigHelper::ReadEncrypted(const wxString key, wxString& plaintext_value, const wxString& default_value, const wxString& salt)
+wxmailto_status ConfigHelper::ReadEncrypted(const wxString key, SafeString& plaintext_value, const SafeString& default_value, const SafeString& salt)
 {
 	wxConfigBase* config = wxConfigBase::Get();
 	wxASSERT(NULL!=config);
 	if (!config)
 		return ID_NULL_POINTER;
 
+	wxmailto_status status;
+
 	wxString encrypted_value_hex;
-	config->Read(key, &encrypted_value_hex, default_value);
+	const char* default_value_str;
+	if (ID_OK!=(status=default_value.GetStr(default_value_str)))
+		return status;
+	
+	config->Read(key, &encrypted_value_hex, default_value_str);
 	if (encrypted_value_hex.IsEmpty())
 	{
 		plaintext_value.Clear();
 	}
 	else
 	{
-		wxmailto_status status;
 		if (ID_OK!=(status=wxGetApp().GetAppModuleManager()->GetPasswordManager()->
-		    GenericDecrypt(encrypted_value_hex, plaintext_value, salt)))
+		    GenericDecrypt(encrypted_value_hex, salt, plaintext_value)))
 		{
 			return status;
 		}
@@ -45,7 +50,7 @@ wxmailto_status ConfigHelper::ReadEncrypted(const wxString key, wxString& plaint
 	return ID_OK;
 }
 
-wxmailto_status ConfigHelper::WriteEncrypted(const wxString key, const wxString plaintext_value, const wxString& salt, wxBool flush)
+wxmailto_status ConfigHelper::WriteEncrypted(const wxString key, const SafeString& plaintext_value, const SafeString& salt, wxBool flush)
 {
 	wxConfigBase* config = wxConfigBase::Get();
 	wxASSERT(NULL!=config);
@@ -57,7 +62,7 @@ wxmailto_status ConfigHelper::WriteEncrypted(const wxString key, const wxString 
 	{
 		wxmailto_status status;
 		if (ID_OK!=(status=wxGetApp().GetAppModuleManager()->GetPasswordManager()->
-		    GenericEncrypt(plaintext_value, encrypted_value_hex, salt)))
+		    GenericEncrypt(plaintext_value, salt, encrypted_value_hex)))
 		{
 			return status;
 		}

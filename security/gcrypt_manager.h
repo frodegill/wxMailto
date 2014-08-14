@@ -10,6 +10,7 @@
 
 #include "gpg_manager.h"
 #include "../gui/wxmailto_module.h"
+#include "../string/safestring.h"
 #include "../wxmailto_errors.h"
 
 
@@ -33,17 +34,12 @@ public:  //From wxMailto_Module
 	wxmailto_status PrepareShutdown();
 
 public:
-	wxmailto_status DecryptWithDerivedKey(const wxString& encrypted_hex, const wxUint8* derived_key, wxString& plaintext);
-	wxmailto_status DecryptWithDerivedKey(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxUint8* derived_key, wxString& plaintext);
-	wxmailto_status EncryptWithDerivedKey(const wxString& plaintext, const wxUint8* derived_key, wxString& encrypted_hex);
-	wxmailto_status EncryptWithDerivedKey(const wxUint8* plain, const wxSizeT& plain_length, const wxUint8* derived_key, wxString& encrypted_hex);
+	wxmailto_status DecryptWithDerivedKey(const wxString& encrypted_hex, const wxUint8* derived_key, SafeString& plaintext);
+	wxmailto_status DecryptWithDerivedKey(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxUint8* derived_key, SafeString& plaintext);
+	wxmailto_status EncryptWithDerivedKey(const SafeString& plaintext, const wxUint8* derived_key, wxString& encrypted_hex);
 
-	wxmailto_status Hash(const wxString& plaintext, wxString& hash_hex);
-	wxmailto_status Hash(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash_hex);
-	wxmailto_status DeriveKey(const wxString& plaintext, const wxString& salt, wxUint8* derived_key);
-	wxmailto_status DeriveKey(const wxUint8* plain, const wxSizeT& plain_length,
-														const wxUint8* salt, const wxSizeT& salt_length,
-														wxUint8* derived_key);
+	wxmailto_status Hash(const SafeString& plaintext, wxString& hash_hex);
+	wxmailto_status DeriveKey(const SafeString& plaintext, const SafeString& salt, wxUint8* derived_key);
 
 public:
 	wxInt GetCipherAlgorithm() const {return GCRY_CIPHER_AES256;}

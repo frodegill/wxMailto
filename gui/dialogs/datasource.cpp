@@ -45,31 +45,40 @@ bool DatasourceDialog::Show()
 	if (!config)
 		return false;
 
-	wxString encrypted_connectionstring_hex;
-	wxString plaintext_connectionstring;
-#ifdef WIPE_AFTER_USE
-	plaintext_connectionstring.WipeAfterUse();
-#endif
-
-	if (ID_OK != ConfigHelper::ReadEncrypted(CONFIG_CONNECTIONSTRING, plaintext_connectionstring, wxEmptyString, DSN_SALT))
+	SafeString plaintext_connectionstring;
+	SafeString default_value;
+	SafeString dsn_salt;
+	if (ID_OK!=default_value.SetStr("", NOOP) ||
+	    ID_OK!=dsn_salt.StrDup(DSN_SALT))
 	{
 		return false;
 	}
 
-	wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_CONNECTIONSTRING)), wxTextCtrl)->SetValue(plaintext_connectionstring);
+	if (ID_OK != ConfigHelper::ReadEncrypted(CONFIG_CONNECTIONSTRING, plaintext_connectionstring, default_value, dsn_salt))
+	{
+		return false;
+	}
+
+	const char* plaintext_connectionstring_str;
+	if (!plaintext_connectionstring.GetStr(plaintext_connectionstring_str))
+		return false;
+
+	wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_CONNECTIONSTRING)), wxTextCtrl)->SetValue(plaintext_connectionstring_str);
 
 	return wxDialog::Show(true);
 }
 
 void DatasourceDialog::OnOk(wxCommandEvent& WXUNUSED(event))
 {
-	wxString plaintext_connectionstring;
-#ifdef WIPE_AFTER_USE
-	plaintext_connectionstring.WipeAfterUse();
-#endif
-	plaintext_connectionstring = wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_CONNECTIONSTRING)), wxTextCtrl)->GetValue();
+	SafeString plaintext_connectionstring;
+	SafeString dsn_salt;
+	if (ID_OK!=plaintext_connectionstring.StrDup(wxDynamicCast(FindWindow(wxGetApp().GetWindowID(IDManager::IDD_CONNECTIONSTRING)), wxTextCtrl)->GetValue().ToUTF8()) ||
+	    ID_OK!=dsn_salt.StrDup(DSN_SALT))
+	{
+		return;
+	}
 
-	ConfigHelper::WriteEncrypted(CONFIG_CONNECTIONSTRING, plaintext_connectionstring, DSN_SALT, true);
+	ConfigHelper::WriteEncrypted(CONFIG_CONNECTIONSTRING, plaintext_connectionstring, dsn_salt, true);
 	
 	{
 		wxCriticalSectionLocker locker(*m_dialog_critical_section);

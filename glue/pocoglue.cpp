@@ -44,12 +44,18 @@ wxmailto_status PocoGlue::Initialize()
 		return LOGERROR(ID_SHOULDNT_GET_HERE);
 	}
 
-	std::string connection_string;
-	if (ID_OK!=(GetConnectionString(connection_string)))
-		return LOGERROR(ID_INVALID_DATASOURCE);
+	{
+		SafeString connection_string;
+		if (ID_OK!=(GetConnectionString(connection_string)))
+			return LOGERROR(ID_INVALID_DATASOURCE);
 
-	Poco::Data::ODBC::Connector::registerConnector();
-	m_pool = new Poco::Data::SessionPool("wxMailto-pool", connection_string);
+		const char* connection_string_ptr;
+		if (ID_OK!=(status=connection_string.GetStr(connection_string_ptr)))
+			return status;
+
+		Poco::Data::ODBC::Connector::registerConnector();
+		m_pool = new Poco::Data::SessionPool("ODBC", connection_string_ptr);
+	}
 
 	//Update database, if needed
 	if (ID_OK!=(status=UpdateDatabaseIfNeeded()))
@@ -163,7 +169,7 @@ wxmailto_status PocoGlue::LogError(const wxString& message)
 	return ID_OK;
 }
 
-wxmailto_status PocoGlue::GetConnectionString(std::string& connection_string)
+wxmailto_status PocoGlue::GetConnectionString(SafeString& plaintext_connectionstring)
 {
 	wxmailto_status status;
 
@@ -183,17 +189,15 @@ wxmailto_status PocoGlue::GetConnectionString(std::string& connection_string)
 		}
 	}
 
-	wxString plaintext_connectionstring;
-#ifdef WIPE_AFTER_USE
-	plaintext_connectionstring.WipeAfterUse();
-#endif
-	if (ID_OK!=(status=ConfigHelper::ReadEncrypted(CONFIG_CONNECTIONSTRING, plaintext_connectionstring, wxEmptyString, DSN_SALT)))
+	SafeString default_value;
+	SafeString salt;
+	if (ID_OK!=(status=default_value.SetStr("", NOOP)) ||
+	    ID_OK!=(status=salt.StrDup(DSN_SALT)))
 	{
 		return status;
 	}
 
-	connection_string = plaintext_connectionstring;
-	return ID_OK;
+	return ConfigHelper::ReadEncrypted(CONFIG_CONNECTIONSTRING, plaintext_connectionstring, default_value, salt);
 }
 
 wxmailto_status PocoGlue::UpdateDatabaseIfNeeded()

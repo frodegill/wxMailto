@@ -54,23 +54,21 @@ wxmailto_status GcryptManager::PrepareShutdown()
 	return ID_OK;
 }
 
-wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxString& encrypted_hex, const wxUint8* derived_key, wxString& plaintext)
+wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxString& encrypted_hex, const wxUint8* derived_key, SafeString& plaintext)
 {
 	wxmailto_status status;
 	wxUint8* encrypted_buffer;
 	wxSizeT encrypted_buffer_length;
 	if (ID_OK!=(status=StringUtils::HexStringToByteArrayAllocates(encrypted_hex, encrypted_buffer, encrypted_buffer_length)))
 	{
-		plaintext.clear();
 		return status;
 	}
 	status = DecryptWithDerivedKey(encrypted_buffer, encrypted_buffer_length, derived_key, plaintext);
-	memset(encrypted_buffer, 0, encrypted_buffer_length);
 	delete[] encrypted_buffer;
 	return status;
 }
 
-wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxUint8* derived_key, wxString& plaintext)
+wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxUint8* derived_key, SafeString& plaintext)
 {
 	size_t outsize = GetRequiredBuffenLength(encrypted_length, GetCipherAlgorithm());
 	wxUint8* out = reinterpret_cast<wxUint8*>(gcry_malloc_secure(outsize));
@@ -101,21 +99,23 @@ wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxUint8* encrypted, c
 
 	gcry_cipher_close(handle);
 
-	plaintext = wxString::FromUTF8(reinterpret_cast<const char*>(out), outsize);
+	plaintext.StrDup(out, outsize);
 	gcry_free(out);
 
 	return ID_OK;
 }
 
-wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxString& plaintext, const wxUint8* derived_key, wxString& encrypted_hex)
+wxmailto_status GcryptManager::EncryptWithDerivedKey(const SafeString& plaintext, const wxUint8* derived_key, wxString& encrypted_hex)
 {
-	const wxScopedCharBuffer plaintext_buffer = plaintext.ToUTF8();
-	return EncryptWithDerivedKey(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), derived_key, encrypted_hex);
-}
+	wxmailto_status status;
+	const wxUint8* plaintext_ptr;
+	wxSizeT plaintext_length;
+	if (ID_OK!=(status=plaintext.Get(plaintext_ptr, plaintext_length)))
+	{
+		return status;
+	}
 
-wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxUint8* plain, const wxSizeT& plain_length, const wxUint8* derived_key, wxString& encrypted_hex)
-{
-	size_t outsize = GetRequiredBuffenLength(plain_length, GetCipherAlgorithm());
+	size_t outsize = GetRequiredBuffenLength(plaintext_length, GetCipherAlgorithm());
 	wxUint8* out = new wxUint8[outsize];
 	if (!out)
 		return LOGERROR(ID_OUT_OF_MEMORY);
@@ -134,7 +134,7 @@ wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxUint8* plain, const
 
 	if (GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setkey(handle, derived_key, GetDerivedKeyLength())) ||
 	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setiv(handle, g_iv16, sizeof(g_iv16)/sizeof(g_iv16[0]))) ||
-	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_encrypt(handle, out, outsize, plain, plain_length)))
+	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_encrypt(handle, out, outsize, plaintext_ptr, plaintext_length)))
 	{
 		gpg_err = gcry_err_code(gcry_err);
 		gcry_cipher_close(handle);
@@ -144,44 +144,48 @@ wxmailto_status GcryptManager::EncryptWithDerivedKey(const wxUint8* plain, const
 
 	gcry_cipher_close(handle);
 
-	wxmailto_status status = StringUtils::ByteArrayToHexString(out, outsize, encrypted_hex);
+	status = StringUtils::ByteArrayToHexString(out, outsize, encrypted_hex);
 	delete[] out;
 	return status;
 }
 
-wxmailto_status GcryptManager::Hash(const wxString& plaintext, wxString& hash_hex)
+wxmailto_status GcryptManager::Hash(const SafeString& plaintext, wxString& hash_hex)
 {
-	const wxScopedCharBuffer plaintext_buffer = plaintext.ToUTF8();
-	return Hash(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(), hash_hex);
-}
-
-wxmailto_status GcryptManager::Hash(const wxUint8* plain, const wxSizeT& plain_length, wxString& hash_hex)
-{
+	wxmailto_status status;
+	const wxUint8* plaintext_ptr;
+	wxSizeT plaintext_length;
+	if (ID_OK!=(status=plaintext.Get(plaintext_ptr, plaintext_length)))
+	{
+		return status;
+	}
+	
 	wxUint8* digest = new wxUint8[SHA512_HASH_LEN];
 	if (!digest)
 		return LOGERROR(ID_OUT_OF_MEMORY);
 
-	gcry_md_hash_buffer(GCRY_MD_SHA512, digest, plain, plain_length);
-	wxmailto_status status = StringUtils::ByteArrayToHexString(digest, SHA512_HASH_LEN, hash_hex);
+	gcry_md_hash_buffer(GCRY_MD_SHA512, digest, plaintext_ptr, plaintext_length);
+	status = StringUtils::ByteArrayToHexString(digest, SHA512_HASH_LEN, hash_hex);
 	delete[] digest;
 	return status;
 }
 
-wxmailto_status GcryptManager::DeriveKey(const wxString& plaintext, const wxString& salt, wxUint8* derived_key)
-{
-	const wxScopedCharBuffer plaintext_buffer = plaintext.ToUTF8();
-	const wxScopedCharBuffer salt_buffer = salt.ToUTF8();
-	return DeriveKey(reinterpret_cast<const wxUint8*>(plaintext_buffer.data()), plaintext_buffer.length(),
-                   reinterpret_cast<const wxUint8*>(salt_buffer.data()), salt_buffer.length(),
-                   derived_key);
-}
-
-wxmailto_status GcryptManager::DeriveKey(const wxUint8* plain, const wxSizeT& plain_length,
-                                      const wxUint8* salt, const wxSizeT& salt_length,
+wxmailto_status GcryptManager::DeriveKey(const SafeString& plaintext,
+                                      const SafeString& salt,
                                       wxUint8* derived_key)
 {
-	gcry_error_t gcry_err = gcry_kdf_derive(plain, plain_length, GCRY_KDF_PBKDF2, GCRY_MD_SHA512,
-                                          salt, salt_length, DERIVED_KEY_ITERATIONS, GetDerivedKeyLength(), derived_key);
+	wxmailto_status status;
+	const wxUint8* plaintext_ptr;
+	wxSizeT plaintext_length;
+	const wxUint8* salt_ptr;
+	wxSizeT salt_length;
+	if (ID_OK!=(status=plaintext.Get(plaintext_ptr, plaintext_length)) ||
+	    ID_OK!=(status=salt.Get(salt_ptr, salt_length)))
+	{
+		return status;
+	}
+	
+	gcry_error_t gcry_err = gcry_kdf_derive(plaintext_ptr, plaintext_length, GCRY_KDF_PBKDF2, GCRY_MD_SHA512,
+                                          salt_ptr, salt_length, DERIVED_KEY_ITERATIONS, GetDerivedKeyLength(), derived_key);
 	gpg_err_code_t gpg_err = gcry_err_code(gcry_err);
 	return ConvertStatus(gpg_err);
 }
