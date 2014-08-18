@@ -21,6 +21,7 @@ enum SafeStringMode
 	NOOP, //Do nothing, src is probably a global or shared string
 	CLEAR,  //Overwrite by \0. Buffer is deleted somewhere else
 	FREE, //Overwrite and free()
+	GCRY_FREE, //gcry_free()
 	DELETE //Overwrite and delete[]
 };
 

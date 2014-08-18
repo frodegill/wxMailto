@@ -9,20 +9,13 @@
 #ifdef WX_PRECOMP
 # include "../pch.h"
 #else
+# include <gcrypt.h>
 #endif
 
 #include "safestring.h"
 
 using namespace wxMailto;
 
-
-enum SafeStringMode
-{
-	NOOP, //Do nothing, src is probably a global or shared string
-	CLEAR,  //Overwrite by \0. Buffer is deleted somewhere else
-	FREE, //Overwrite and free()
-	DELETE //Overwrite and delete[]
-};
 
 SafeString::SafeString()
 :	m_string(NULL),
@@ -119,6 +112,10 @@ wxmailto_status SafeString::Clear()
 	if (FREE == m_mode)
 	{
 		free(const_cast<wxUint8*>(m_string));
+	}
+	else if (GCRY_FREE == m_mode)
+	{
+		gcry_free(const_cast<wxUint8*>(m_string));
 	}
 	else if (DELETE == m_mode)
 	{

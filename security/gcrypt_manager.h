@@ -34,12 +34,12 @@ public:  //From wxMailto_Module
 	wxmailto_status PrepareShutdown();
 
 public:
-	wxmailto_status DecryptWithDerivedKey(const wxString& encrypted_hex, const wxUint8* derived_key, SafeString& plaintext);
-	wxmailto_status DecryptWithDerivedKey(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxUint8* derived_key, SafeString& plaintext);
-	wxmailto_status EncryptWithDerivedKey(const SafeString& plaintext, const wxUint8* derived_key, wxString& encrypted_hex);
+	wxmailto_status DecryptWithDerivedKey(const wxString& encrypted_hex, const SafeString& derived_key, SafeString& plaintext);
+	wxmailto_status DecryptWithDerivedKey(const wxUint8* encrypted, const wxSizeT& encrypted_length, const SafeString& derived_key, SafeString& plaintext);
+	wxmailto_status EncryptWithDerivedKey(const SafeString& plaintext, const SafeString& derived_key, wxString& encrypted_hex);
 
 	wxmailto_status Hash(const SafeString& plaintext, wxString& hash_hex);
-	wxmailto_status DeriveKey(const SafeString& plaintext, const SafeString& salt, wxUint8* derived_key);
+	wxmailto_status DeriveKey(const SafeString& plaintext, const SafeString& salt, SafeString& derived_key);
 
 public:
 	wxInt GetCipherAlgorithm() const {return GCRY_CIPHER_AES256;}

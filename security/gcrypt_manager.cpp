@@ -54,7 +54,7 @@ wxmailto_status GcryptManager::PrepareShutdown()
 	return ID_OK;
 }
 
-wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxString& encrypted_hex, const wxUint8* derived_key, SafeString& plaintext)
+wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxString& encrypted_hex, const SafeString& derived_key, SafeString& plaintext)
 {
 	wxmailto_status status;
 	wxUint8* encrypted_buffer;
@@ -68,7 +68,7 @@ wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxString& encrypted_h
 	return status;
 }
 
-wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxUint8* encrypted, const wxSizeT& encrypted_length, const wxUint8* derived_key, SafeString& plaintext)
+wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxUint8* encrypted, const wxSizeT& encrypted_length, const SafeString& derived_key, SafeString& plaintext)
 {
 	size_t outsize = GetRequiredBuffenLength(encrypted_length, GetCipherAlgorithm());
 	wxUint8* out = reinterpret_cast<wxUint8*>(gcry_malloc_secure(outsize));
@@ -87,7 +87,16 @@ wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxUint8* encrypted, c
 		return LOGERROR(ConvertStatus(gpg_err));
 	}
 
-	if (GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setkey(handle, derived_key, GetDerivedKeyLength())) ||
+	wxmailto_status status;
+	const wxUint8* derived_key_data;
+	wxSizeT derived_key_length;
+	if (ID_OK!=(status=derived_key.Get(derived_key_data, derived_key_length)))
+	{
+		gcry_free(out);
+		return status;
+	}
+
+	if (GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setkey(handle, derived_key_data, derived_key_length)) ||
 	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setiv(handle, g_iv16, sizeof(g_iv16)/sizeof(g_iv16[0]))) ||
 	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_decrypt(handle, out, outsize, encrypted, encrypted_length)))
 	{
@@ -105,7 +114,7 @@ wxmailto_status GcryptManager::DecryptWithDerivedKey(const wxUint8* encrypted, c
 	return ID_OK;
 }
 
-wxmailto_status GcryptManager::EncryptWithDerivedKey(const SafeString& plaintext, const wxUint8* derived_key, wxString& encrypted_hex)
+wxmailto_status GcryptManager::EncryptWithDerivedKey(const SafeString& plaintext, const SafeString& derived_key, wxString& encrypted_hex)
 {
 	wxmailto_status status;
 	const wxUint8* plaintext_ptr;
@@ -132,7 +141,15 @@ wxmailto_status GcryptManager::EncryptWithDerivedKey(const SafeString& plaintext
 		return LOGERROR(ConvertStatus(gpg_err));
 	}
 
-	if (GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setkey(handle, derived_key, GetDerivedKeyLength())) ||
+	const wxUint8* derived_key_data;
+	wxSizeT derived_key_length;
+	if (ID_OK!=(status=derived_key.Get(derived_key_data, derived_key_length)))
+	{
+		delete[] out;
+		return status;
+	}
+
+	if (GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setkey(handle, derived_key_data, derived_key_length)) ||
 	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_setiv(handle, g_iv16, sizeof(g_iv16)/sizeof(g_iv16[0]))) ||
 	    GPG_ERR_NO_ERROR != gcry_err_code(gcry_err=gcry_cipher_encrypt(handle, out, outsize, plaintext_ptr, plaintext_length)))
 	{
@@ -169,9 +186,7 @@ wxmailto_status GcryptManager::Hash(const SafeString& plaintext, wxString& hash_
 	return status;
 }
 
-wxmailto_status GcryptManager::DeriveKey(const SafeString& plaintext,
-                                      const SafeString& salt,
-                                      wxUint8* derived_key)
+wxmailto_status GcryptManager::DeriveKey(const SafeString& plaintext, const SafeString& salt, SafeString& derived_key)
 {
 	wxmailto_status status;
 	const wxUint8* plaintext_ptr;
@@ -183,9 +198,15 @@ wxmailto_status GcryptManager::DeriveKey(const SafeString& plaintext,
 	{
 		return status;
 	}
-	
+
+	wxSizeT derived_key_length = GetDerivedKeyLength();
+	wxUint8* derived_key_data = reinterpret_cast<wxUint8*>(gcry_malloc_secure(derived_key_length));
+	if (!derived_key_data)
+		return LOGERROR(ID_OUT_OF_MEMORY);
+
 	gcry_error_t gcry_err = gcry_kdf_derive(plaintext_ptr, plaintext_length, GCRY_KDF_PBKDF2, GCRY_MD_SHA512,
-                                          salt_ptr, salt_length, DERIVED_KEY_ITERATIONS, GetDerivedKeyLength(), derived_key);
+                                          salt_ptr, salt_length, DERIVED_KEY_ITERATIONS, derived_key_length, derived_key_data);
+	derived_key.Set(derived_key_data, derived_key_length, GCRY_FREE);
 	gpg_err_code_t gpg_err = gcry_err_code(gcry_err);
 	return ConvertStatus(gpg_err);
 }

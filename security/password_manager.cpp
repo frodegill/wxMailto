@@ -174,14 +174,10 @@ wxmailto_status PasswordManager::GetLocation(wxUInt id, SafeString& location)
 		if (ID_OK!=(status=location_salt.StrDupIndexed(LOCATION_SALT, id)))
 			return status;
 
-		wxUint8* derived_location_master_key = new wxUint8[gcrypt_manager->GetDerivedKeyLength()];
-		if (!derived_location_master_key)
-			return LOGERROR(ID_OUT_OF_MEMORY);
-
+		SafeString derived_location_master_key;
 		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
 		    ID_OK != (status=CreateDerivedKey(master_passphrase, location_salt, derived_location_master_key)))
 		{
-			delete[] derived_location_master_key;
 			return status;
 		}
 
@@ -189,11 +185,8 @@ wxmailto_status PasswordManager::GetLocation(wxUInt id, SafeString& location)
 		if (ID_OK != (status=LoadLocation(id, encrypted_location_hex)) ||
 		    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_location_hex, derived_location_master_key, location)))
 		{
-			delete[] derived_location_master_key;
 			return status;
 		}
-
-		delete[] derived_location_master_key;
 	}
 
 	return ID_OK;
@@ -230,24 +223,13 @@ wxmailto_status PasswordManager::GetCredential(const SafeString& master_passphra
 		return status;
 	}
 
-	wxUint8* derived_location_master_key = new wxUint8[gcrypt_manager->GetDerivedKeyLength()];
-	wxUint8* derived_username_master_key = new wxUint8[gcrypt_manager->GetDerivedKeyLength()];
-	wxUint8* derived_password_master_key = new wxUint8[gcrypt_manager->GetDerivedKeyLength()];
-	if (!derived_location_master_key || !derived_username_master_key || !derived_password_master_key)
-	{
-		delete[] derived_location_master_key;
-		delete[] derived_username_master_key;
-		delete[] derived_password_master_key;
-		return LOGERROR(ID_OUT_OF_MEMORY);
-	}
-
+	SafeString derived_location_master_key;
+	SafeString derived_username_master_key;
+	SafeString derived_password_master_key;
 	if (ID_OK != (status=CreateDerivedKey(master_passphrase, location_salt, derived_location_master_key)) ||
 	    ID_OK != (status=CreateDerivedKey(master_passphrase, username_salt, derived_username_master_key)) ||
 	    ID_OK != (status=CreateDerivedKey(master_passphrase, password_salt, derived_password_master_key)))
 	{
-		delete[] derived_location_master_key;
-		delete[] derived_username_master_key;
-		delete[] derived_password_master_key;
 		return status;
 	}
 
@@ -259,15 +241,8 @@ wxmailto_status PasswordManager::GetCredential(const SafeString& master_passphra
 	    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_username_hex, derived_username_master_key, username)) ||
 	    ID_OK != (status=gcrypt_manager->DecryptWithDerivedKey(encrypted_password_hex, derived_password_master_key, password)))
 	{
-		delete[] derived_location_master_key;
-		delete[] derived_username_master_key;
-		delete[] derived_password_master_key;
 		return status;
 	}
-
-	delete[] derived_location_master_key;
-	delete[] derived_username_master_key;
-	delete[] derived_password_master_key;
 	return ID_OK;
 }
 
@@ -302,24 +277,13 @@ wxmailto_status PasswordManager::SetCredential(const SafeString& master_passphra
 		return status;
 	}
 
-	wxUint8* derived_location_master_key = new wxUint8[gcrypt_manager->GetDerivedKeyLength()];
-	wxUint8* derived_username_master_key = new wxUint8[gcrypt_manager->GetDerivedKeyLength()];
-	wxUint8* derived_password_master_key = new wxUint8[gcrypt_manager->GetDerivedKeyLength()];
-	if (!derived_location_master_key || !derived_username_master_key || !derived_password_master_key)
-	{
-		delete[] derived_location_master_key;
-		delete[] derived_username_master_key;
-		delete[] derived_password_master_key;
-		return LOGERROR(ID_OUT_OF_MEMORY);
-	}
-
+	SafeString derived_location_master_key;
+	SafeString derived_username_master_key;
+	SafeString derived_password_master_key;
 	if (ID_OK != (status=CreateDerivedKey(master_passphrase, location_salt, derived_location_master_key)) ||
 	    ID_OK != (status=CreateDerivedKey(master_passphrase, username_salt, derived_username_master_key)) ||
 	    ID_OK != (status=CreateDerivedKey(master_passphrase, password_salt, derived_password_master_key)))
 	{
-		delete[] derived_location_master_key;
-		delete[] derived_username_master_key;
-		delete[] derived_password_master_key;
 		return status;
 	}
 
@@ -330,15 +294,8 @@ wxmailto_status PasswordManager::SetCredential(const SafeString& master_passphra
 	    ID_OK != (status=gcrypt_manager->EncryptWithDerivedKey(username, derived_username_master_key, encrypted_username_hex)) ||
 	    ID_OK != (status=gcrypt_manager->EncryptWithDerivedKey(password, derived_password_master_key, encrypted_password_hex)))
 	{
-		delete[] derived_location_master_key;
-		delete[] derived_username_master_key;
-		delete[] derived_password_master_key;
 		return status;
 	}
-
-	delete[] derived_location_master_key;
-	delete[] derived_username_master_key;
-	delete[] derived_password_master_key;
 	return SaveCredential(id, encrypted_location_hex, encrypted_username_hex, encrypted_password_hex);
 }
 
@@ -611,7 +568,7 @@ wxmailto_status PasswordManager::CreateHash(const SafeString& secret, const Safe
 	return gcrypt_manager->Hash(plaintext, hashed_value_hex);
 }
 
-wxmailto_status PasswordManager::CreateDerivedKey(const SafeString& plaintext, const SafeString& salt, wxUint8* derived_key)
+wxmailto_status PasswordManager::CreateDerivedKey(const SafeString& plaintext, const SafeString& salt, SafeString& derived_key)
 {
 	GcryptManager* gcrypt_manager = wxGetApp().GetAppModuleManager()->GetGcryptManager();
 	return gcrypt_manager->DeriveKey(plaintext, salt, derived_key);
@@ -626,24 +583,14 @@ wxmailto_status PasswordManager::GenericEncrypt(const SafeString& plaintext, con
 
 		GcryptManager* gcrypt_manager = wxGetApp().GetAppModuleManager()->GetGcryptManager();
 
-		wxUint8* derived_master_key = new wxUint8[gcrypt_manager->GetDerivedKeyLength()];
-		if (!derived_master_key)
-		{
-			delete[] derived_master_key;
-			return LOGERROR(ID_OUT_OF_MEMORY);
-		}
-
+		SafeString derived_master_key;
 		SafeString master_passphrase;
 		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
 		    ID_OK != (status=CreateDerivedKey(master_passphrase, salt, derived_master_key)))
 		{
-			delete[] derived_master_key;
 			return status;
 		}
-
-		status = gcrypt_manager->EncryptWithDerivedKey(plaintext, derived_master_key, encrypted_hex);
-		delete[] derived_master_key;
-		return status;
+		return gcrypt_manager->EncryptWithDerivedKey(plaintext, derived_master_key, encrypted_hex);
 	}
 }
 
@@ -656,23 +603,13 @@ wxmailto_status PasswordManager::GenericDecrypt(const wxString& encrypted_hex, c
 
 		GcryptManager* gcrypt_manager = wxGetApp().GetAppModuleManager()->GetGcryptManager();
 
-		wxUint8* derived_master_key = new wxUint8[gcrypt_manager->GetDerivedKeyLength()];
-		if (!derived_master_key)
-		{
-			delete[] derived_master_key;
-			return LOGERROR(ID_OUT_OF_MEMORY);
-		}
-
+		SafeString derived_master_key;
 		SafeString master_passphrase;
 		if (ID_OK != (status=GetMasterPassphrase(master_passphrase)) ||
 		    ID_OK != (status=CreateDerivedKey(master_passphrase, salt, derived_master_key)))
 		{
-			delete[] derived_master_key;
 			return status;
 		}
-
-		status = gcrypt_manager->DecryptWithDerivedKey(encrypted_hex, derived_master_key, plaintext);
-		delete[] derived_master_key;
-		return status;
+		return gcrypt_manager->DecryptWithDerivedKey(encrypted_hex, derived_master_key, plaintext);
 	}
 }

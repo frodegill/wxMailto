@@ -58,7 +58,7 @@ private:
 
 	wxmailto_status CreateHash(const SafeString& secret, const SafeString& salt, wxString& hashed_value_hex);
 
-	wxmailto_status CreateDerivedKey(const SafeString& plaintext, const SafeString& salt, wxUint8* derived_key);
+	wxmailto_status CreateDerivedKey(const SafeString& plaintext, const SafeString& salt, SafeString& derived_key);
 
 public:
 	wxmailto_status GenericEncrypt(const SafeString& plaintext, const SafeString& salt, wxString& encrypted_hex);
