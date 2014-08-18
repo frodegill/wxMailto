@@ -55,12 +55,12 @@ wxmailto_status SafeString::SetStr(const char* src, SafeStringMode mode)
 
 wxmailto_status SafeString::StrDup(const wxUint8* src, const wxSizeT& src_len)
 {
-	wxUint8* tmp = static_cast<wxUint8*>(malloc(src_len));
+	wxUint8* tmp = reinterpret_cast<wxUint8*>(gcry_malloc_secure(src_len));
 	if (!tmp)
 		return ID_OUT_OF_MEMORY;
 
 	memcpy(tmp, src, src_len);
-	return Set(tmp, src_len, FREE);
+	return Set(tmp, src_len, GCRY_FREE);
 }
 
 wxmailto_status SafeString::StrDup(const char* src)
@@ -72,13 +72,13 @@ wxmailto_status SafeString::StrDup(const char* src)
 wxmailto_status SafeString::StrDupIndexed(const char* src, int index)
 {
 	int max_length = strlen(src)+20; //No number should exceed 20 characters
-	wxUint8* tmp = static_cast<wxUint8*>(malloc(max_length));
+	wxUint8* tmp = reinterpret_cast<wxUint8*>(gcry_malloc_secure(max_length));
 	if (!tmp)
 		return ID_OUT_OF_MEMORY;
 
 	snprintf(reinterpret_cast<char*>(tmp), max_length, src, index);
 	int length = strnlen(reinterpret_cast<char*>(tmp), max_length);
-	return Set(tmp, length, FREE);
+	return Set(tmp, length, GCRY_FREE);
 }
 
 wxmailto_status SafeString::Get(const wxUint8*& dst, wxSizeT& length) const
@@ -109,13 +109,13 @@ wxmailto_status SafeString::Clear()
 	if (0 < m_length)
 		memset(const_cast<wxUint8*>(m_string), 0, m_length);
 
-	if (FREE == m_mode)
-	{
-		free(const_cast<wxUint8*>(m_string));
-	}
-	else if (GCRY_FREE == m_mode)
+	if (GCRY_FREE == m_mode)
 	{
 		gcry_free(const_cast<wxUint8*>(m_string));
+	}
+	else if (FREE == m_mode)
+	{
+		free(const_cast<wxUint8*>(m_string));
 	}
 	else if (DELETE == m_mode)
 	{
@@ -130,11 +130,11 @@ wxmailto_status SafeString::Clear()
 wxmailto_status SafeString::Append(const SafeString& str)
 {
 	int new_length = m_length + str.m_length;
-	wxUint8* tmp = static_cast<wxUint8*>(malloc(new_length));
+	wxUint8* tmp = reinterpret_cast<wxUint8*>(gcry_malloc_secure(new_length));
 	if (!tmp)
 		return ID_OUT_OF_MEMORY;
 
 	memcpy(tmp, m_string, m_length);
 	memcpy(tmp+m_length, str.m_string, str.m_length);
-	return Set(tmp, new_length, FREE);
+	return Set(tmp, new_length, GCRY_FREE);
 }

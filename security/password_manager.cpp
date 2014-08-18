@@ -73,13 +73,13 @@ wxmailto_status PasswordManager::GetMasterPassphrase(SafeString& passphrase)
 			SetMasterPassphrase(old_passphrase, new_passphrase);
 		}
 
-		wxUint8* utf8_buffer = new wxUint8[m_obfuscated_master_password_length];
+		wxUint8* utf8_buffer = reinterpret_cast<wxUint8*>(gcry_malloc_secure(m_obfuscated_master_password_length));
 		size_t i;
 		for (i=0; m_obfuscated_master_password_length>i; i++)
 		{
 			utf8_buffer[i] = m_obfuscated_master_password[i]^m_master_password_obfuscator[i];
 		}
-		passphrase.Set(utf8_buffer, m_obfuscated_master_password_length, DELETE);
+		passphrase.Set(utf8_buffer, m_obfuscated_master_password_length, GCRY_FREE);
 	}
 
 	return ID_OK;
