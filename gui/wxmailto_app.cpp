@@ -162,7 +162,7 @@ wxmailto_status wxMailto_App::LogDebug(const wxString& msg) const
 	{
 		wxCriticalSectionLocker locker(GetGlobalLockers()->m_log_lock);
 
-		fprintf(stderr, "%s", msg.ToUTF8().data());
+		fprintf(stderr, "%s\n", msg.ToUTF8().data());
 		fflush(stderr);
 	}
 	return ID_OK;
