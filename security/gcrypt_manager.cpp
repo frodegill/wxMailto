@@ -39,6 +39,12 @@ wxmailto_status GcryptManager::Initialize()
 	gcry_control(GCRYCTL_RESUME_SECMEM_WARN);
 	gcry_control(GCRYCTL_INITIALIZATION_FINISHED, 0);
 
+	if (!gcry_control (GCRYCTL_INITIALIZATION_FINISHED_P))
+	{
+		LOGDEBUG("libgcrypt failed to initialize");
+		return LOGERROR(ID_GENERIC_ERROR);
+	}
+
 	wxGetApp().GetAppModuleManager()->RegisterModule(this);
 
 	return ID_OK;
