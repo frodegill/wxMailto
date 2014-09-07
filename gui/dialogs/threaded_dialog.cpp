@@ -43,6 +43,40 @@ wxmailto_status ThreadedModelessDialogLauncher::Show(wxWindowID id, const wxStri
 	return ID_OK;
 }
 
+wxmailto_status ThreadedModalDialogLauncherData::InitializeAndLock()
+{
+	if (NULL==(m_dialog_mutex=new wxMutex()))
+	{
+		return LOGERROR(ID_OUT_OF_MEMORY);
+	}
+	if (NULL==(m_dialog_closes_condition=new wxCondition(*m_dialog_mutex)))
+	{
+		delete m_dialog_mutex;
+		m_dialog_mutex = NULL;
+		return LOGERROR(ID_OUT_OF_MEMORY);
+	}
+
+	m_dialog_mutex->Lock();
+	return ID_OK;
+}
+
+wxmailto_status ThreadedModalDialogLauncherData::Signal()
+{
+	if (!m_dialog_closes_condition)
+		return LOGERROR(ID_NULL_POINTER);
+
+	m_dialog_closes_condition->Signal();
+	return ID_OK;
+}
+
+wxmailto_status ThreadedModalDialogLauncherData::Wait()
+{
+	if (!m_dialog_closes_condition)
+		return LOGERROR(ID_NULL_POINTER);
+
+	m_dialog_closes_condition->Wait();
+	return ID_OK;
+}
 
 
 # include <wx/listimpl.cpp>
@@ -55,16 +89,17 @@ ThreadedModalDialogLauncher::ThreadedModalDialogLauncher()
 
 wxmailto_status ThreadedModalDialogLauncher::Show(wxWindowID id)
 {
+	wxmailto_status status;
 	ThreadedModalDialogLauncherData* data = new ThreadedModalDialogLauncherData();
-	if (!data ||
-	    NULL==(data->m_dialog_mutex=new wxMutex()) ||
-	    NULL==(data->m_dialog_closes_condition=new wxCondition(*data->m_dialog_mutex)))
+	if (!data)
 	{
-		delete data;
 		return LOGERROR(ID_OUT_OF_MEMORY);
 	}
-
-	data->m_dialog_mutex->Lock();
+	else if (ID_OK!=(status=data->InitializeAndLock()))
+	{
+		delete data;
+		return status;
+	}
 
 	wxThreadEvent* evt = new wxThreadEvent(wxEVT_THREAD, id);
 	if (!evt)
@@ -76,9 +111,7 @@ wxmailto_status ThreadedModalDialogLauncher::Show(wxWindowID id)
 	evt->SetPayload<ThreadedModalDialogLauncherData*>(data);
 	wxQueueEvent(wxGetApp().GetMainFrame(), evt);
 
-	data->m_dialog_closes_condition->Wait();
-	
-	return ID_OK;
+	return data->Wait();
 }
 
 

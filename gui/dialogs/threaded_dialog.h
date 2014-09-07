@@ -38,12 +38,14 @@ public:
 
 struct ThreadedModalDialogLauncherData
 {
-friend class ThreadedModalDialogLauncher;
-	
 	ThreadedModalDialogLauncherData() : m_dialog_mutex(NULL), m_dialog_closes_condition(NULL), m_status(ID_UNINITIALIZED) {}
 	~ThreadedModalDialogLauncherData() {delete m_dialog_closes_condition; delete m_dialog_mutex;}
 
-	void Signal() {m_dialog_closes_condition->Signal();}
+	wxmailto_status InitializeAndLock();
+
+	wxmailto_status Signal();
+	wxmailto_status Wait();
+
 	void SetStatus(const wxmailto_status& status) {m_status = status;}
 	wxmailto_status GetStatus() const {return m_status;}
 
