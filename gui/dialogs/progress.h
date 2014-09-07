@@ -11,7 +11,6 @@
 #include <wx/gauge.h>
 #include <wx/stattext.h>
  
-#include "threaded_dialog.h"
 #include "../../defines.h"
 
 namespace wxMailto
