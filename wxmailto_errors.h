@@ -1,7 +1,7 @@
 #ifndef _WXMAILTO_ERRORS_H_
 #define _WXMAILTO_ERRORS_H_
 
-// Copyright (C) 2009-2013  Frode Roxrud Gill
+// Copyright (C) 2009-2014  Frode Roxrud Gill
 // See LICENSE file for license
 
 #ifdef __GNUG__
@@ -45,12 +45,10 @@ enum wxmailto_status
 	ID_TEST_FAILED,
 
 	//Contacts
-#if 0
 	ID_CONTACT_GROUP_WITHOUT_NAME,
 	ID_CONTACT_WITHOUT_EMAIL,
 	ID_CONTACT_INVALID_TYPE,
 	ID_CONTACT_NO_VALID_ADDRESS_FOR_PERIOD,
-#endif
 	//ODBC
 	ID_INVALID_DATASOURCE,
 #if 0
@@ -58,7 +56,6 @@ enum wxmailto_status
 	ID_NO_DATA,
 #endif
 	//Protocols
-#if 0
 	ID_UNKNOWN_SERVER,
 	ID_CONNECTION_FAILED,
 	ID_NOT_CONNECTED,
@@ -68,12 +65,9 @@ enum wxmailto_status
 	ID_AUTHENTICATION_FAILED,
 	ID_AUTHENTICATION_NOT_SUPPORTED,
 	ID_ALREADY_SYNCING,
-#endif
 	//POP
-#if 0
 	ID_POP_LOGIN_DELAY, //RFC2449 §8.1.1
 	ID_POP_IN_USE, //RFC2449 §8.1.2
-#endif
 	//Version
 #if 0
 	ID_UPDATE_DATABASE_FAILED,

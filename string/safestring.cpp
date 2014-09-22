@@ -138,3 +138,13 @@ wxmailto_status SafeString::Append(const SafeString& str)
 	memcpy(tmp+m_length, str.m_string, str.m_length);
 	return Set(tmp, new_length, GCRY_FREE);
 }
+
+wxmailto_status SafeString::AppendStr(const char* str)
+{
+	wxmailto_status status;
+	SafeString tmp;
+	if (ID_OK!=(status=tmp.SetStr(str, NOOP)))
+		return status;
+	
+	return Append(tmp);
+}

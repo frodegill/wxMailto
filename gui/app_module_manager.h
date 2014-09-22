@@ -11,23 +11,21 @@
 #include <wx/thread.h>
 #include "wxmailto_app.h"
 #include "wxmailto_module.h"
-#if 0
 #include "../glue/authenticateglue.h"
-#endif
 #include "../security/gcrypt_manager.h"
 #include "../security/gpg_manager.h"
 #include "../security/password_manager.h"
-#if 0
 #include "../glue/idnaglue.h"
+#if 0
 #include "../glue/mimeglue.h"
 #endif
 #include "../glue/pocoglue.h"
-#if 0
 #include "../glue/tlsglue.h"
+#if 0
 #include "../security/session.h"
 #include "../storage/account.h"
-#include "../storage/messagestore.h"
 #endif
+#include "../storage/messagestore.h"
 
 namespace wxMailto
 {
@@ -64,23 +62,22 @@ public:
 	wxmailto_status PrepareShutdown();
 
 public:
-#if 0
 	AuthenticateGlue* GetAuthenticateGlue();
-#endif
 	GcryptManager* GetGcryptManager();
 	GPGManager* GetGPGManager();
 	PasswordManager* GetPasswordManager();
-#if 0
 	IdnaGlue* GetIdnaGLue();
+#if 0
 	MimeGlue* GetMimeGlue();
 #endif
 	PocoGlue* GetPocoGlue();
-#if 0
 	TLSGlue* GetTLSGlue();
+#if 0
 	SessionManager* GetSessionManager();
 	AccountManager* GetAccountManager();
-	MessageStore* GetMessageStore();
 #endif
+	MessageStore* GetMessageStore();
+
 private:
 	wxMailto_Module* GetGenericModule(wxMailto_Module::ModuleType type);
 
@@ -89,23 +86,19 @@ private:
 	wxmailto_status PrepareShutdownModule(ModulePrepareShutdowner* shutdowner);
 
 private:
-#if 0
 friend class AuthenticateGlue;
-#endif
 friend class GcryptManager;
 friend class GPGManager;
 friend class PasswordManager;
-#if 0
 friend class IdnaGlue;
 friend class MimeGlue;
-#endif
 friend class PocoGlue;
-#if 0
 friend class TLSGlue;
 friend class MessageStore;
+#if 0
 friend class SessionManager;
-friend class AccountManager;
 #endif
+friend class AccountManager;
 	void RegisterModule(wxMailto_Module* module);
 	void UnregisterModule(wxMailto_Module* module);
   wxMailto_Module* GetModule(wxMailto_Module::ModuleType type);

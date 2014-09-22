@@ -21,21 +21,19 @@ class wxMailto_Module
 {
 public:
 	enum ModuleType { //This enum should really not be here, but it's easier to please the compiler here..
-#if 0
 		AUTHENTICATE=0,
-#endif
 		GCRYPT,
 		GPG,
 		PASSWORD,
 		POCO,
-#if 0
 		IDNA,
 		MIME,
 		TLS,
 		MESSAGESTORE,
+#if 0
 		SESSIONMANAGER,
-		ACCOUNTMANAGER,
 #endif
+		ACCOUNTMANAGER,
 		MODULECOUNT
 	};
 

@@ -96,20 +96,18 @@ wxmailto_status AppModuleManager::Initialize()
 
 	//Allocate modules
 	if (
-#if 0
 			!(m_allocated_modules[wxMailto_Module::AUTHENTICATE]=new AuthenticateGlue()) ||
-#endif
 	    !(m_allocated_modules[wxMailto_Module::GCRYPT]=new GcryptManager()) ||
 	    !(m_allocated_modules[wxMailto_Module::GPG]=new GPGManager()) ||
 	    !(m_allocated_modules[wxMailto_Module::PASSWORD]=new PasswordManager()) ||
-#if 0
 	    !(m_allocated_modules[wxMailto_Module::IDNA]=new IdnaGlue()) ||
+#if 0
 	    !(m_allocated_modules[wxMailto_Module::MIME]=new MimeGlue()) ||
 #endif
-	    !(m_allocated_modules[wxMailto_Module::POCO]=new PocoGlue())
-#if 0
+	    !(m_allocated_modules[wxMailto_Module::POCO]=new PocoGlue()) ||
 	    !(m_allocated_modules[wxMailto_Module::TLS]=new TLSGlue()) ||
-	    !(m_allocated_modules[wxMailto_Module::MESSAGESTORE]=new MessageStore()) ||
+	    !(m_allocated_modules[wxMailto_Module::MESSAGESTORE]=new MessageStore())
+#if 0
 	    !(m_allocated_modules[wxMailto_Module::SESSIONMANAGER]=new SessionManager()) ||
 	    !(m_allocated_modules[wxMailto_Module::ACCOUNTMANAGER]=new AccountManager())
 #endif
@@ -165,12 +163,12 @@ wxmailto_status AppModuleManager::PrepareShutdown()
 
 	return ID_OK;
 }
-#if 0
+
 AuthenticateGlue* AppModuleManager::GetAuthenticateGlue()
 {
 	return static_cast<AuthenticateGlue*>(GetGenericModule(wxMailto_Module::AUTHENTICATE));
 }
-#endif
+
 GcryptManager* AppModuleManager::GetGcryptManager()
 {
 	return static_cast<GcryptManager*>(GetGenericModule(wxMailto_Module::GCRYPT));
@@ -185,12 +183,13 @@ PasswordManager* AppModuleManager::GetPasswordManager()
 {
 	return static_cast<PasswordManager*>(GetGenericModule(wxMailto_Module::PASSWORD));
 }
-#if 0
+
 IdnaGlue* AppModuleManager::GetIdnaGLue()
 {
 	return static_cast<IdnaGlue*>(GetGenericModule(wxMailto_Module::IDNA));
 }
 
+#if 0
 MimeGlue* AppModuleManager::GetMimeGlue()
 {
 	return static_cast<MimeGlue*>(GetGenericModule(wxMailto_Module::MIME));
@@ -200,12 +199,12 @@ PocoGlue* AppModuleManager::GetPocoGlue()
 {
 	return static_cast<PocoGlue*>(GetGenericModule(wxMailto_Module::POCO));
 }
-#if 0
+
 TLSGlue* AppModuleManager::GetTLSGlue()
 {
 	return static_cast<TLSGlue*>(GetGenericModule(wxMailto_Module::TLS));
 }
-
+#if 0
 SessionManager* AppModuleManager::GetSessionManager()
 {
 	return static_cast<SessionManager*>(GetGenericModule(wxMailto_Module::SESSIONMANAGER));
@@ -215,12 +214,13 @@ AccountManager* AppModuleManager::GetAccountManager()
 {
 	return static_cast<AccountManager*>(GetGenericModule(wxMailto_Module::ACCOUNTMANAGER));
 }
+#endif
 
 MessageStore* AppModuleManager::GetMessageStore()
 {
 	return static_cast<MessageStore*>(GetGenericModule(wxMailto_Module::MESSAGESTORE));
 }
-#endif
+
 wxMailto_Module* AppModuleManager::GetGenericModule(wxMailto_Module::ModuleType type)
 {
 	//If module already registered, return it

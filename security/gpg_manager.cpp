@@ -60,7 +60,7 @@ wxmailto_status GPGManager::Initialize()
 	unit_tests.RunTests();
 #endif //RUN_TESTS
 
-#if 1
+#if 0
 	GPGKey key;
 	GetDefaultKey(key);
 #endif

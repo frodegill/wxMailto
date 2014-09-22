@@ -8,8 +8,6 @@
   #pragma interface "safestring.h"
 #endif
 
-//#include <wx/string.h>
-//#include "../defines.h"
 #include "../wxmailto_errors.h"
 
 
@@ -47,6 +45,7 @@ public:
 	wxmailto_status Clear();
 
 	wxmailto_status Append(const SafeString& str);
+	wxmailto_status AppendStr(const char* str);
 
 private:
 	const wxUint8* m_string;
