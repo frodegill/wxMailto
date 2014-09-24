@@ -1,5 +1,5 @@
 
-// Copyright (C) 2008-2013  Frode Roxrud Gill
+// Copyright (C) 2008-2014  Frode Roxrud Gill
 // See license.h for License
 
 #ifdef __GNUG__
@@ -160,7 +160,7 @@ wxmailto_status Message::SetDBId()
 {
 	wxmailto_status status;
 	PersistentProperty p;
-	if (ID_OK != (status=p.Initialize("next_message_id", &wxGetApp().GetGlobalLockers()->m_next_message_id_lock)))
+	if (ID_OK != (status=p.Initialize("next_message_id", &wxGetApp().GetGlobalLockers()->m_generic_property_lock)))
 		return status;
 
 	return p.GetNextAvailableId(m_db_id);

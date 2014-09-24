@@ -20,9 +20,8 @@ struct GlobalLockers {
 	wxCriticalSection m_log_lock;
 	wxCriticalSection m_next_credential_id_lock;
 
-	wxCriticalSection m_next_message_id_lock;
-#if 0
 	wxCriticalSection m_generic_property_lock;
+#if 0
 	wxCriticalSection m_next_multipart_id_lock;
 #endif
 };

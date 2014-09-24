@@ -16,15 +16,11 @@
 #include "../security/gpg_manager.h"
 #include "../security/password_manager.h"
 #include "../glue/idnaglue.h"
-#if 0
 #include "../glue/mimeglue.h"
-#endif
 #include "../glue/pocoglue.h"
 #include "../glue/tlsglue.h"
-#if 0
 #include "../security/session.h"
 #include "../storage/account.h"
-#endif
 #include "../storage/messagestore.h"
 
 namespace wxMailto
@@ -67,15 +63,11 @@ public:
 	GPGManager* GetGPGManager();
 	PasswordManager* GetPasswordManager();
 	IdnaGlue* GetIdnaGLue();
-#if 0
 	MimeGlue* GetMimeGlue();
-#endif
 	PocoGlue* GetPocoGlue();
 	TLSGlue* GetTLSGlue();
-#if 0
 	SessionManager* GetSessionManager();
 	AccountManager* GetAccountManager();
-#endif
 	MessageStore* GetMessageStore();
 
 private:
@@ -95,9 +87,7 @@ friend class MimeGlue;
 friend class PocoGlue;
 friend class TLSGlue;
 friend class MessageStore;
-#if 0
 friend class SessionManager;
-#endif
 friend class AccountManager;
 	void RegisterModule(wxMailto_Module* module);
 	void UnregisterModule(wxMailto_Module* module);

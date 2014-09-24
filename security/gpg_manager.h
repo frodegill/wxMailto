@@ -16,6 +16,9 @@
 namespace wxMailto
 {
 
+#define GPGContext gpgme_ctx_t
+#define GPGGenKeyResult gpgme_genkey_result_t
+
 
 class GPGManager : public wxMailto_Module
 {
@@ -29,8 +32,14 @@ public:  //From wxMailto_Module
 	wxmailto_status PrepareShutdown();
 
 public:
+	wxmailto_status CreateContext(GPGContext& context);
+	wxmailto_status ReleaseContext(GPGContext& context);
+
+	wxmailto_status GetDefaultKeyID(wxInt& id);
 	wxmailto_status GetDefaultKey(GPGKey& key);
 	wxmailto_status GetSecretKeys(GPGKeyList& key_list, wxBool& truncated);
+
+	wxmailto_status GenerateKey(GPGContext& context, wxInt& id);
 
 public:
 	static wxmailto_status ConvertStatus(gpg_err_code_t error_code);

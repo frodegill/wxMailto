@@ -1,0 +1,6 @@
+RFC821  "SIMPLE MAIL TRANSFER PROTOCOL", complete support
+RFC1651 "SMTP Service Extensions", complete support
+RFC1734 "POP3 AUTHentication command", complete support
+RFC1939 "Post Office Protocol - Version 3"
+RFC2449 "POP3 Extension Mechanism", complete support
+RFC2821 "Simple Mail Transfer Protocol", complete support

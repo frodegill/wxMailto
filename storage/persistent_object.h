@@ -20,7 +20,9 @@ namespace wxMailto
 #define DB_VERSION                    "db_version"
 #if 0
 #define ENABLE_PERSISTENT_MIME_PARSE	"enable_persistent_mime_parse"
+#endif
 #define GPG_DEFAULT_KEY								"gpg_default_key"
+#if 0
 #define NEXT_MESSAGE_ID								"next_message_id"
 #define NEXT_MULTIPART_ID							"next_multipart_id"
 #endif

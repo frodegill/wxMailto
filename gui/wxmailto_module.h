@@ -30,9 +30,7 @@ public:
 		MIME,
 		TLS,
 		MESSAGESTORE,
-#if 0
 		SESSIONMANAGER,
-#endif
 		ACCOUNTMANAGER,
 		MODULECOUNT
 	};

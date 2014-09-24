@@ -17,6 +17,7 @@
 #include "../gui/app_module_manager.h"
 #include "../gui/wxmailto_app.h"
 #include "../string/stringutils.h"
+#include "../storage/persistent_object.h"
 #include "gpg_manager.h"
 
 #ifdef RUN_TESTS
@@ -74,6 +75,51 @@ wxmailto_status GPGManager::PrepareShutdown()
 	wxGetApp().GetAppModuleManager()->UnregisterModule(this);
 
 	return ID_OK;
+}
+
+wxmailto_status GPGManager::CreateContext(GPGContext& context)
+{
+	switch(gpgme_new(&context))
+	{
+		case GPG_ERR_NO_ERROR: return ID_OK;
+		case GPG_ERR_ENOMEM: return LOGERROR(ID_OUT_OF_MEMORY);
+		default: return LOGERROR(ID_GENERIC_ERROR);
+	}
+}
+
+wxmailto_status GPGManager::ReleaseContext(GPGContext& context)
+{
+	if (!context)
+		return LOGERROR(ID_NULL_POINTER);
+	
+	gpgme_release(context);
+	return ID_OK;
+}
+
+wxmailto_status GPGManager::GetDefaultKeyID(wxInt& id)
+{
+	PersistentProperty* property = new PersistentProperty();
+	if (!property)
+		return LOGERROR(ID_OUT_OF_MEMORY);
+	
+	wxBool exists;
+	wxmailto_status status = property->Initialize(GPG_DEFAULT_KEY, &wxGetApp().GetGlobalLockers()->m_generic_property_lock);
+	if (ID_OK == status)
+	{
+	    status = property->GetIntValue(id, exists);
+	}
+	delete property;
+
+	if (ID_OK==status && !exists)
+	{
+		GPGContext context;
+		if (ID_OK==(status=CreateContext(context)))
+		{
+			status = GenerateKey(context, id);
+			ReleaseContext(context);
+		}
+	}
+	return status;
 }
 
 wxmailto_status GPGManager::GetDefaultKey(GPGKey& WXUNUSED(key))
@@ -161,6 +207,28 @@ wxmailto_status GPGManager::GetSecretKeys(GPGKeyList& key_list, wxBool& truncate
 
 	gpgme_release (ctx);
 	return ConvertStatus(gpg_err);
+}
+
+wxmailto_status GPGManager::GenerateKey(GPGContext& context, wxInt& WXUNUSED(id))
+{
+	const char* parms = "<GnupgKeyParms format=\"internal\">\r\n"\
+                      "Key-Type: default\r\n"\
+                      "Subkey-Type: default\r\n"\
+                      "Name-Real: Joe Tester\r\n"\
+                      "Name-Comment: with stupid passphrase\r\n"\
+                      "Name-Email: joe@foo.bar\r\n"\
+                      "Expire-Date: 0\r\n"\
+                      "Passphrase: abc\r\n"\
+                      "</GnupgKeyParms>";
+	wxmailto_status status = (GPG_ERR_NO_ERROR==gpgme_op_genkey(context, parms, NULL, NULL)) ? ID_OK : ID_GENERIC_ERROR;
+	if (ID_OK==status) {
+		GPGGenKeyResult key_result = gpgme_op_genkey_result(context);
+		if (!key_result || 0==key_result->primary)
+		{
+			status = ID_GENERIC_ERROR;
+		}
+	}
+	return status;
 }
 
 wxmailto_status GPGManager::ConvertStatus(gpg_err_code_t error_code)
