@@ -51,10 +51,6 @@ enum wxmailto_status
 	ID_CONTACT_NO_VALID_ADDRESS_FOR_PERIOD,
 	//ODBC
 	ID_INVALID_DATASOURCE,
-#if 0
-	ID_DATASOURCE_ERROR,
-	ID_NO_DATA,
-#endif
 	//Protocols
 	ID_UNKNOWN_SERVER,
 	ID_CONNECTION_FAILED,
@@ -69,9 +65,6 @@ enum wxmailto_status
 	ID_POP_LOGIN_DELAY, //RFC2449 §8.1.1
 	ID_POP_IN_USE, //RFC2449 §8.1.2
 	//Version
-#if 0
-	ID_UPDATE_DATABASE_FAILED,
-#endif
 	ID_EXPIRED
 };
 
