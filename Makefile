@@ -11,6 +11,7 @@ all:    $(PROGRAM)
 PCH = pch.h
 #WXWIDGETS_VERSION = 3.1
 DEBUG_INFO = YES
+USE_ODBC_CONNECTION = YES
 RUN_TESTS = YES
 SOURCES = $(shell find . -name '*.cpp')
 OBJECTS = $(SOURCES:.cpp=.o)
@@ -31,10 +32,26 @@ ifdef PCH
 endif
 ifdef DEBUG_INFO
  CPPFLAGS += -g
- LIBSFLAGS += -lPocoODBCd -lPocoMySQLd -lPocoDatad -lPocoFoundationd
+ LIBSFLAGS += -lPocoDatad -lPocoFoundationd
 else
  CPPFLAGS += -O
- LIBSFLAGS += -lPocoODBC -lPocoMySQL -lPocoData -lPocoFoundation
+ LIBSFLAGS += -lPocoData -lPocoFoundation
+endif
+
+ifdef USE_ODBC_CONNECTION
+ CXXFLAGS += -DUSE_ODBC_CONNECTION
+ ifdef DEBUG_INFO
+  LIBSFLAGS += -lPocoDataODBCd
+ else
+  LIBSFLAGS += -lPocoDataODBC
+ endif
+else
+ CXXFLAGS += -DUSE_MYSQL_CONNECTION
+ ifdef DEBUG_INFO
+  LIBSFLAGS += -lPocoDataMySQLd
+ else
+  LIBSFLAGS += -lPocoDataMySQL
+ endif
 endif
 
 ifdef RUN_TESTS

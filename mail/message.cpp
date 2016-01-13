@@ -128,8 +128,8 @@ wxmailto_status Message::SaveToDB(Poco::Data::Session* session)
 	if (0!=m_db_id) //Update existing message
 	{
 		*session << "DELETE FROM message WHERE message_id = ?", //cascades
-			Poco::Data::use(m_db_id),
-			Poco::Data::now;
+			Poco::Data::Keywords::use(m_db_id),
+			Poco::Data::Keywords::now;
 	}
 	else //New message
 	{
@@ -138,8 +138,8 @@ wxmailto_status Message::SaveToDB(Poco::Data::Session* session)
 	}
 
 	*session << "INSERT INTO message (message_id) VALUES (?)",
-		Poco::Data::use(m_db_id),
-		Poco::Data::now;
+		Poco::Data::Keywords::use(m_db_id),
+		Poco::Data::Keywords::now;
 		
 		//Todo, persist raw message
 #if 0

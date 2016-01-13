@@ -131,22 +131,22 @@ wxmailto_status DatabaseUpdate::GetDatabaseVersion(Poco::Data::Session* session_
 	*session_in_transaction << "CREATE TABLE IF NOT EXISTS property "\
 	                           "(property_key CHAR(50) CHARACTER SET utf8 NOT NULL PRIMARY KEY," /*PROPERTY_PROPERTY_KEY_LEN*/ \
 	                           " property_value TEXT CHARACTER SET utf8)" /*PROPERTY_PROPERTY_VALUE_LEN*/ \
-	                           "engine = InnoDB", Poco::Data::now;
+	                           "engine = InnoDB", Poco::Data::Keywords::now;
 
 	wxUint16 count;
 	*session_in_transaction << "SELECT COUNT(*) FROM property WHERE property_key='db_version'",
-			Poco::Data::into(count,(const wxUint16)0), Poco::Data::now;
+			Poco::Data::Keywords::into(count,(const wxUint16)0), Poco::Data::Keywords::now;
 
 	if (0==count)
 	{
-		*session_in_transaction << "INSERT INTO property (property_key, property_value) VALUE ('db_version',0);", Poco::Data::now;
+		*session_in_transaction << "INSERT INTO property (property_key, property_value) VALUE ('db_version',0);", Poco::Data::Keywords::now;
 
 		if (ID_OK!=(status=PocoGlue::CommitTransaction(session_in_transaction))) //Only CREATE TABLE, INSERT will get here
 			return status;
 	}
 
 	*session_in_transaction << "SELECT property_value FROM property WHERE property_key='db_version'",
-			Poco::Data::into(db_version,(const wxUint32)0), Poco::Data::now;
+			Poco::Data::Keywords::into(db_version,(const wxUint32)0), Poco::Data::Keywords::now;
 
 	return status;
 }
@@ -167,14 +167,14 @@ wxmailto_status DatabaseUpdate::UpdateIfNeeded(Poco::Data::Session* session_in_t
 
 			try
 			{
-				*session_in_transaction << update_items[index].m_update_query, Poco::Data::now;
+				*session_in_transaction << update_items[index].m_update_query, Poco::Data::Keywords::now;
 
 				if (update_items[index].m_db_version != update_items[index+1].m_db_version)
 				{
 					*session_in_transaction << "UPDATE property "\
 					                           "SET property_value = ? "\
 					                           "WHERE property_key='db_version'",
-						Poco::Data::use(max_version), Poco::Data::now;
+						Poco::Data::Keywords::use(max_version), Poco::Data::Keywords::now;
 
 					status = PocoGlue::CommitTransaction(session_in_transaction);
 				}

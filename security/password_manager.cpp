@@ -11,7 +11,7 @@
 #else
 #endif
 
-#include <Poco/Data/BLOB.h>
+//#include <Poco/Data/BLOB.h>
 #include "Poco/Data/RecordSet.h"
 
 #include "../defines.h"
@@ -323,13 +323,13 @@ wxmailto_status PasswordManager::LoadLocation(wxUInt id, wxString& encrypted_loc
 
 	Poco::Data::BLOB encrypted_location_blob;
 	*session << "SELECT location FROM credentials WHERE id=?",
-			Poco::Data::into(encrypted_location_blob),
-			Poco::Data::use(id),
-			Poco::Data::now;
+			Poco::Data::Keywords::into(encrypted_location_blob),
+			Poco::Data::Keywords::use(id),
+			Poco::Data::Keywords::now;
 
 	poco_glue->ReleaseSession(session);
 	
-	encrypted_location_hex = wxString::FromUTF8(encrypted_location_blob.rawContent(), encrypted_location_blob.size());
+	encrypted_location_hex = wxString::FromUTF8(reinterpret_cast<const char*>(encrypted_location_blob.rawContent()), encrypted_location_blob.size());
 
 	return ID_OK;
 }
@@ -351,17 +351,17 @@ wxmailto_status PasswordManager::LoadCredential(wxUInt id, wxString& encrypted_l
 	Poco::Data::BLOB encrypted_username_blob;
 	Poco::Data::BLOB encrypted_password_blob;
 	*session << "SELECT location,username,password FROM credentials WHERE id=?",
-			Poco::Data::into(encrypted_location_blob),
-			Poco::Data::into(encrypted_username_blob),
-			Poco::Data::into(encrypted_password_blob),
-			Poco::Data::use(id),
-			Poco::Data::now;
+			Poco::Data::Keywords::into(encrypted_location_blob),
+			Poco::Data::Keywords::into(encrypted_username_blob),
+			Poco::Data::Keywords::into(encrypted_password_blob),
+			Poco::Data::Keywords::use(id),
+			Poco::Data::Keywords::now;
 
 	poco_glue->ReleaseSession(session);
 	
-	encrypted_location_hex = wxString::FromUTF8(encrypted_location_blob.rawContent(), encrypted_location_blob.size());
-	encrypted_username_hex = wxString::FromUTF8(encrypted_username_blob.rawContent(), encrypted_username_blob.size());
-	encrypted_password_hex = wxString::FromUTF8(encrypted_password_blob.rawContent(), encrypted_password_blob.size());
+	encrypted_location_hex = wxString::FromUTF8(reinterpret_cast<const char*>(encrypted_location_blob.rawContent()), encrypted_location_blob.size());
+	encrypted_username_hex = wxString::FromUTF8(reinterpret_cast<const char*>(encrypted_username_blob.rawContent()), encrypted_username_blob.size());
+	encrypted_password_hex = wxString::FromUTF8(reinterpret_cast<const char*>(encrypted_password_blob.rawContent()), encrypted_password_blob.size());
 
 	return ID_OK;
 }
@@ -402,26 +402,26 @@ wxmailto_status PasswordManager::SaveCredential(wxUInt& id, const wxString& encr
 	const wxScopedCharBuffer encrypted_username_buffer = encrypted_username_hex.ToUTF8();
 	const wxScopedCharBuffer encrypted_password_buffer = encrypted_password_hex.ToUTF8();
 	
-	Poco::Data::BLOB encrypted_location_blob(encrypted_location_buffer.data(), encrypted_location_buffer.length());
-	Poco::Data::BLOB encrypted_username_blob(encrypted_username_buffer.data(), encrypted_username_buffer.length());
-	Poco::Data::BLOB encrypted_password_blob(encrypted_password_buffer.data(), encrypted_password_buffer.length());
+	Poco::Data::BLOB encrypted_location_blob(reinterpret_cast<const wxUint8*>(encrypted_location_buffer.data()), encrypted_location_buffer.length());
+	Poco::Data::BLOB encrypted_username_blob(reinterpret_cast<const wxUint8*>(encrypted_username_buffer.data()), encrypted_username_buffer.length());
+	Poco::Data::BLOB encrypted_password_blob(reinterpret_cast<const wxUint8*>(encrypted_password_buffer.data()), encrypted_password_buffer.length());
 	if (update)
 	{
 		*session << "UPDATE credentials SET location=?,username=?,password=? WHERE id=?",
-				Poco::Data::use(encrypted_location_blob),
-				Poco::Data::use(encrypted_username_blob),
-				Poco::Data::use(encrypted_password_blob),
-				Poco::Data::use(id),
-				Poco::Data::now;
+				Poco::Data::Keywords::use(encrypted_location_blob),
+				Poco::Data::Keywords::use(encrypted_username_blob),
+				Poco::Data::Keywords::use(encrypted_password_blob),
+				Poco::Data::Keywords::use(id),
+				Poco::Data::Keywords::now;
 	}
 	else
 	{
 		*session << "INSERT INTO credentials (id,location,username,password) VALUES (?,?,?,?)",
-				Poco::Data::use(id),
-				Poco::Data::use(encrypted_location_blob),
-				Poco::Data::use(encrypted_username_blob),
-				Poco::Data::use(encrypted_password_blob),
-				Poco::Data::now;
+				Poco::Data::Keywords::use(id),
+				Poco::Data::Keywords::use(encrypted_location_blob),
+				Poco::Data::Keywords::use(encrypted_username_blob),
+				Poco::Data::Keywords::use(encrypted_password_blob),
+				Poco::Data::Keywords::now;
 	}
 
 	poco_glue->CommitTransaction(session);
@@ -449,9 +449,9 @@ wxmailto_status PasswordManager::UpdateCredentialPassphrase(const SafeString& ol
 
 	wxUInt count, max;
 	*session << "SELECT COUNT(*),MAX(id) FROM credentials",
-			Poco::Data::into(count),
-			Poco::Data::into(max),
-			Poco::Data::now;
+			Poco::Data::Keywords::into(count),
+			Poco::Data::Keywords::into(max),
+			Poco::Data::Keywords::now;
 
 	//Reserve new IDs
 	PersistentProperty* property = new PersistentProperty();
@@ -483,7 +483,7 @@ wxmailto_status PasswordManager::UpdateCredentialPassphrase(const SafeString& ol
 		return LOGERROR(ID_OUT_OF_MEMORY);
 	}
 	*select_ids << "SELECT id FROM credentials WHERE id<=?",
-			Poco::Data::use(max);
+			Poco::Data::Keywords::use(max);
 	select_ids->execute();
 	Poco::Data::RecordSet* select_ids_rs = new Poco::Data::RecordSet(*select_ids);
 	if (!select_ids_rs)
@@ -520,8 +520,8 @@ wxmailto_status PasswordManager::UpdateCredentialPassphrase(const SafeString& ol
 	delete select_ids;
 	
 	*session << "DELETE FROM credentials WHERE id<=?",
-			Poco::Data::use(max),
-			Poco::Data::now;
+			Poco::Data::Keywords::use(max),
+			Poco::Data::Keywords::now;
 
 	poco_glue->CommitTransaction(session);
 	poco_glue->ReleaseSession(session);
@@ -544,8 +544,8 @@ wxmailto_status PasswordManager::DeleteCredential(wxUInt id)
 	}
 
 	*session << "DELETE FROM credentials WHERE id=?",
-			Poco::Data::use(id),
-			Poco::Data::now;
+			Poco::Data::Keywords::use(id),
+			Poco::Data::Keywords::now;
 
 	poco_glue->CommitTransaction(session);
 	poco_glue->ReleaseSession(session);

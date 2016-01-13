@@ -111,16 +111,16 @@ wxmailto_status PocoGlue::StartTransaction(Poco::Data::Session* session)
 
 #if 0
 #if 1
-	//*session << "set autocommit = 0", Poco::Data::now;
-	//*session << "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE", Poco::Data::now;
-	//*session << "START TRANSACTION WITH CONSISTENT SNAPSHOT", Poco::Data::now;
+	//*session << "set autocommit = 0", Poco::Data::Keywords::now;
+	//*session << "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE", Poco::Data::Keywords::now;
+	//*session << "START TRANSACTION WITH CONSISTENT SNAPSHOT", Poco::Data::Keywords::now;
 #else
 		session->begin();
 #endif
 #else
-	*session << "set autocommit = 0", Poco::Data::now;
-	//*session << "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE", Poco::Data::now;
-	//*session << "START TRANSACTION", Poco::Data::now;
+	*session << "set autocommit = 0", Poco::Data::Keywords::now;
+	//*session << "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE", Poco::Data::Keywords::now;
+	//*session << "START TRANSACTION", Poco::Data::Keywords::now;
 	session->begin();
 #endif
 	return ID_OK;
@@ -131,7 +131,7 @@ wxmailto_status PocoGlue::CommitTransaction(Poco::Data::Session* session)
 	if (!session)
 		return LOGERROR(ID_NULL_POINTER);
 
-	//*session << "COMMIT AND CHAIN", Poco::Data::now;
+	//*session << "COMMIT AND CHAIN", Poco::Data::Keywords::now;
 	session->commit();
 	session->begin();
 	return ID_OK;
@@ -142,7 +142,7 @@ wxmailto_status PocoGlue::RollbackTransaction(Poco::Data::Session* session)
 	if (!session)
 		return LOGERROR(ID_NULL_POINTER);
 
-	//*session << "ROLLBACK AND CHAIN", Poco::Data::now;
+	//*session << "ROLLBACK AND CHAIN", Poco::Data::Keywords::now;
 	session->rollback();
 	session->begin();
 	return ID_OK;

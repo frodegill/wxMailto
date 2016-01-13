@@ -145,8 +145,8 @@ wxmailto_status PersistentProperty::DeleteValue()
 		std::string key_string = std::string(m_key.ToUTF8());
 		*session << "DELETE FROM property "\
 		            "WHERE property_key = ?",
-			Poco::Data::use(key_string),
-			Poco::Data::now;
+			Poco::Data::Keywords::use(key_string),
+			Poco::Data::Keywords::now;
 
 		status = PocoGlue::CommitTransaction(session);
 	}
@@ -182,10 +182,10 @@ wxmailto_status PersistentProperty::ReadValueWhileLocked(Poco::Data::Session* se
 		int rowcount = 0;
 		std::string value_string;
 		*session << "SELECT COUNT(*) AS rowcount, property_value FROM property WHERE property_key = ?",
-			Poco::Data::into(rowcount),
-			Poco::Data::into(value_string),
-			Poco::Data::use(key_string),
-			Poco::Data::now;
+			Poco::Data::Keywords::into(rowcount),
+			Poco::Data::Keywords::into(value_string),
+			Poco::Data::Keywords::use(key_string),
+			Poco::Data::Keywords::now;
 	
 	exists = (0<rowcount);
 	value = wxString(value_string);
@@ -232,9 +232,9 @@ wxmailto_status PersistentProperty::WriteValueWhileLocked(Poco::Data::Session* s
 		*session << "UPDATE property "\
 		            "SET property_value = ? "\
 		            "WHERE property_key = ?",
-			Poco::Data::use(value_string),
-			Poco::Data::use(key_string),
-			Poco::Data::now;
+			Poco::Data::Keywords::use(value_string),
+			Poco::Data::Keywords::use(key_string),
+			Poco::Data::Keywords::now;
 	}
 	else
 	{
@@ -242,9 +242,9 @@ wxmailto_status PersistentProperty::WriteValueWhileLocked(Poco::Data::Session* s
                 "(property_key, property_value) "\
                 "VALUES "\
                 "(?, ?)",
-			Poco::Data::use(key_string),
-			Poco::Data::use(value_string),
-			Poco::Data::now;
+			Poco::Data::Keywords::use(key_string),
+			Poco::Data::Keywords::use(value_string),
+			Poco::Data::Keywords::now;
 	}
 
 	return PocoGlue::CommitTransaction(session);

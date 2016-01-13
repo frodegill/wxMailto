@@ -21,7 +21,9 @@
 #include "../storage/database_update.h"
 #include "../wxmailto_rc.h"
 
-#include <Poco/Data/MySQL/MySQLException.h>
+#ifdef USE_MYSQL_CONNECTION
+# include <Poco/Data/MySQL/MySQLException.h>
+#endif //USE_MYSQL_CONNECTION
 
 using namespace wxMailto;
 
@@ -221,15 +223,17 @@ wxmailto_status AccountManager::LoadFromDB()
 	            " outgoing_account_id, poll_interval, port, protocol,"\
 	            " secure_connection, server_name, wallet_id "\
 	            "FROM accountitem ",
-		Poco::Data::into(accounts),
-		Poco::Data::now;
+		Poco::Data::Keywords::into(accounts),
+		Poco::Data::Keywords::now;
 	}
+#ifdef USE_MYSQL_CONNECTION
 	catch(Poco::Data::MySQL::ConnectionException& ce) {
 		s = wxString(ce.displayText());
 	}
 	catch(Poco::Data::MySQL::StatementException& se) {
 		s = wxString(se.displayText());
 	}
+#endif //USE_MYSQL_CONNECTION
 	catch (Poco::Exception e) {
 		s = wxString(e.displayText());
 		status = ID_GENERIC_ERROR;

@@ -8,7 +8,7 @@
   #pragma interface "pocoglue.h"
 #endif
 
-#include <Poco/Data/Common.h>
+//#include <Poco/Data/Common.h>
 #include <Poco/Data/SessionPool.h>
 #include <wx/string.h>
 

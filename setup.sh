@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #Dependencies: gnutls, GPGME, Libidn, iOdbc, mimetic
-sudo apt-get install g++ mysql-server unixodbc libmyodbc libgnutls-dev libgpgme11-dev libidn11-dev unixodbc-dev libmimetic-dev libgsasl7-dev
+sudo apt-get install g++ mysql-server unixodbc libmyodbc libgnutls-dev libgpgme11-dev libidn11-dev unixodbc-dev libmimetic-dev libgsasl7-dev libpoco-dev libgcrypt20-dev
 
 #Create database
 sudo mysqladmin -u root -p create wxMailto

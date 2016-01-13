@@ -777,7 +777,7 @@ wxmailto_status Pop::HandleUIDL(PopMessageInfoList& messages_to_fetch)
 	//Prepare statement used in loop
 	Poco::Data::Statement uidl_count_statement =
 		 (*session << "SELECT COUNT(*) FROM pop_uidl WHERE account_id = ? AND uidl = ?",
-			Poco::Data::into(uidl_count), Poco::Data::use(account_id), Poco::Data::use(unique_id));
+			Poco::Data::Keywords::into(uidl_count), Poco::Data::Keywords::use(account_id), Poco::Data::Keywords::use(unique_id));
 
 	while(true)
 	{
@@ -922,8 +922,8 @@ wxmailto_status Pop::HandleRETR(const PopMessageInfo* message_to_fetch)
 	wxUint16 account_id = GetAccount()->GetAccountId();
 	std::string uidl = std::string(message_to_fetch->m_uidl.Left(POP_UIDL_UIDL_LEN).ToUTF8());
 	*session << "INSERT INTO pop_uidl (account_id, uidl) VALUES (?, ?)",
-		Poco::Data::use(account_id), Poco::Data::use(uidl),
-		Poco::Data::now;
+		Poco::Data::Keywords::use(account_id), Poco::Data::Keywords::use(uidl),
+		Poco::Data::Keywords::now;
 
 	status = PocoGlue::CommitTransaction(session);
 	poco_glue->ReleaseSession(session);

@@ -166,37 +166,37 @@ class TypeHandler<class wxMailto::PocoAccount>
 public:
 	static std::size_t size() {return 10;}
 
-	static void bind(std::size_t pos, const wxMailto::PocoAccount& obj, AbstractBinder* pBinder)
+	static void bind(std::size_t pos, const wxMailto::PocoAccount& obj, AbstractBinder::Ptr pBinder, AbstractBinder::Direction dir)
 	{
 		poco_assert_dbg(pBinder);
-		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_account_id, pBinder);
-		TypeHandler<std::string>::bind(pos++, obj.m_account_name_string, pBinder);
-		TypeHandler<std::string>::bind(pos++, obj.m_authentication_method_string, pBinder);
-		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_outgoing_account_id, pBinder);
-		TypeHandler<Poco::UInt32>::bind(pos++, obj.m_poll_interval, pBinder);
-		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_port, pBinder);
-		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_protocol, pBinder);
-		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_secure_connection, pBinder);
-		TypeHandler<std::string>::bind(pos++, obj.m_servername_string, pBinder);
-		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_wallet_id, pBinder);
+		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_account_id, pBinder, dir);
+		TypeHandler<std::string>::bind(pos++, obj.m_account_name_string, pBinder, dir);
+		TypeHandler<std::string>::bind(pos++, obj.m_authentication_method_string, pBinder, dir);
+		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_outgoing_account_id, pBinder, dir);
+		TypeHandler<Poco::UInt32>::bind(pos++, obj.m_poll_interval, pBinder, dir);
+		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_port, pBinder, dir);
+		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_protocol, pBinder, dir);
+		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_secure_connection, pBinder, dir);
+		TypeHandler<std::string>::bind(pos++, obj.m_servername_string, pBinder, dir);
+		TypeHandler<Poco::UInt16>::bind(pos++, obj.m_wallet_id, pBinder, dir);
 	}
 
-	static void prepare(std::size_t pos, const wxMailto::PocoAccount& obj, AbstractPreparation* pPrepare)
+	static void prepare(std::size_t pos, const wxMailto::PocoAccount& obj, AbstractPreparator::Ptr pPreparator)
 	{
 		poco_assert_dbg(pBinder);
-		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_account_id, pPrepare);
-		TypeHandler<std::string>::prepare(pos++, obj.m_account_name_string, pPrepare);
-		TypeHandler<std::string>::prepare(pos++, obj.m_authentication_method_string, pPrepare);
-		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_outgoing_account_id, pPrepare);
-		TypeHandler<Poco::UInt32>::prepare(pos++, obj.m_poll_interval, pPrepare);
-		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_port, pPrepare);
-		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_protocol, pPrepare);
-		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_secure_connection, pPrepare);
-		TypeHandler<std::string>::prepare(pos++, obj.m_servername_string, pPrepare);
-		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_wallet_id, pPrepare);
+		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_account_id, pPreparator);
+		TypeHandler<std::string>::prepare(pos++, obj.m_account_name_string, pPreparator);
+		TypeHandler<std::string>::prepare(pos++, obj.m_authentication_method_string, pPreparator);
+		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_outgoing_account_id, pPreparator);
+		TypeHandler<Poco::UInt32>::prepare(pos++, obj.m_poll_interval, pPreparator);
+		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_port, pPreparator);
+		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_protocol, pPreparator);
+		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_secure_connection, pPreparator);
+		TypeHandler<std::string>::prepare(pos++, obj.m_servername_string, pPreparator);
+		TypeHandler<Poco::UInt16>::prepare(pos++, obj.m_wallet_id, pPreparator);
 	}
 
-	static void extract(std::size_t pos, wxMailto::PocoAccount& obj, const wxMailto::PocoAccount& defVal, AbstractExtractor* pExt)
+	static void extract(std::size_t pos, wxMailto::PocoAccount& obj, const wxMailto::PocoAccount& defVal, AbstractExtractor::Ptr pExt)
 	{
 		poco_assert_dbg(pExt);
 		TypeHandler<Poco::UInt16>::extract(pos++, obj.m_account_id, defVal.m_account_id, pExt);
@@ -210,6 +210,7 @@ public:
 		TypeHandler<std::string>::extract(pos++, obj.m_servername_string, defVal.m_servername_string, pExt);
 		TypeHandler<Poco::UInt16>::extract(pos++, obj.m_wallet_id, defVal.m_wallet_id, pExt);
 	}
+
 };
 
 } } // namespace Poco::Data
